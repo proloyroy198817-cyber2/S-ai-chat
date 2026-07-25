@@ -54,11 +54,18 @@ zipStorePath=wrapper/dists
           elif [ -n "$ANDROID_HOME" ]; then
             echo "sdk.dir=$ANDROID_HOME" > local.properties
           fi
-      - name: Ensure Gradle Wrapper JAR
+      - name: Ensure Gradle Wrapper
         script: |
           mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
-            curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
+            if command -v gradle >/dev/null 2>&1; then
+              gradle wrapper --gradle-version 8.7 --distribution-type bin
+            else
+              curl -sSL "https://services.gradle.org/distributions/gradle-8.7-bin.zip" -o gradle-bin.zip
+              unzip -q gradle-bin.zip
+              ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
+              rm -rf gradle-8.7 gradle-bin.zip
+            fi
           fi
       - name: Build Android Debug APK
         script: |
@@ -83,7 +90,7 @@ zipStorePath=wrapper/dists
 plugins {
     id("com.android.application") version "8.2.2" apply false
     id("org.jetbrains.kotlin.android") version "1.9.22" apply false
-    id("kotlin-kapt") version "1.9.22" apply false
+    id("org.jetbrains.kotlin.kapt") version "1.9.22" apply false
     id("com.google.dagger.hilt.android") version "2.50" apply false
 }
 `,
@@ -146,7 +153,7 @@ local.properties
     content: `plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    id("org.jetbrains.kotlin.kapt")
     id("com.google.dagger.hilt.android")
 }
 

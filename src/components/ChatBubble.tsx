@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Copy, Check, Edit3, RotateCcw, Trash2, Bot, User, AlertCircle, ExternalLink, Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Copy, Check, Edit3, RotateCcw, Trash2, Bot, User, AlertCircle, ExternalLink, Globe, Volume2, VolumeX } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { CodeBlock } from './CodeBlock';
 
@@ -26,12 +26,57 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   const [feedbackState, setFeedbackState] = useState<'thumbs_up' | 'thumbs_down' | null>(
     message.feedback || null
   );
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     setFeedbackState(message.feedback || null);
   }, [message.feedback]);
 
+  // Clean up speech synthesis on unmount or message change
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const isUser = message.role === 'user';
+
+  const toggleSpeech = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      window.speechSynthesis.cancel();
+
+      // Clean text for speech (replace code blocks with a brief descriptor)
+      const speechContent = message.content
+        .replace(/```[\s\S]*?```/g, ' Code snippet skipped. ')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_~#]/g, '')
+        .trim();
+
+      if (!speechContent) return;
+
+      const utterance = new SpeechSynthesisUtterance(speechContent);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
+      setIsSpeaking(true);
+    }
+  };
 
   const handleFeedbackToggle = (type: 'thumbs_up' | 'thumbs_down') => {
     const nextFeedback = feedbackState === type ? null : type;
@@ -267,7 +312,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
       {!isEditing && (
         <div
           className={`flex items-center space-x-1 mt-1 px-1 transition-opacity text-stone-400 text-xs ${
-            feedbackState ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            feedbackState || isSpeaking ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           } ${isUser ? 'mr-10' : 'ml-10'}`}
         >
           <button
@@ -298,6 +343,27 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               id={`regenerate-btn-${message.id}`}
             >
               <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Text-to-Speech (TTS) Read Aloud Button */}
+          {!isUser && !message.isStreaming && (
+            <button
+              type="button"
+              id={`tts-btn-${message.id}`}
+              onClick={toggleSpeech}
+              className={`p-1 rounded transition-colors ${
+                isSpeaking
+                  ? 'text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-950/60'
+                  : 'hover:text-stone-700 dark:hover:text-stone-200'
+              }`}
+              title={isSpeaking ? 'Stop Reading Aloud' : 'Read Response Aloud (Text-to-Speech)'}
+            >
+              {isSpeaking ? (
+                <VolumeX className="w-3.5 h-3.5 animate-pulse text-amber-500" />
+              ) : (
+                <Volume2 className="w-3.5 h-3.5" />
+              )}
             </button>
           )}
 
