@@ -57,26 +57,24 @@ zipStorePath=wrapper/dists
       - name: Ensure Gradle Wrapper
         script: |
           mkdir -p gradle/wrapper
-          if command -v gradle >/dev/null 2>&1; then
-            gradle wrapper --gradle-version 8.7 --distribution-type bin
-          else
-            if ! unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
-              rm -f gradle/wrapper/gradle-wrapper.jar
+          if ! unzip -p gradle/wrapper/gradle-wrapper.jar org/gradle/wrapper/GradleWrapperMain.class >/dev/null 2>&1; then
+            echo "Gradle wrapper JAR is missing or invalid. Regenerating..."
+            rm -f gradle/wrapper/gradle-wrapper.jar
+            if command -v gradle >/dev/null 2>&1; then
+              gradle wrapper --gradle-version 8.7 --distribution-type bin
+            else
+              echo "Downloading Gradle 8.7..."
               curl -sSL "https://services.gradle.org/distributions/gradle-8.7-bin.zip" -o gradle-bin.zip
               unzip -q -o gradle-bin.zip
-              ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
+              ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7 --distribution-type bin
               rm -rf gradle-8.7 gradle-bin.zip
             fi
           fi
           chmod +x gradlew
       - name: Build Android Debug APK
         script: |
-          if [ -f "gradle/wrapper/gradle-wrapper.jar" ] && unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
-            chmod +x gradlew
-            ./gradlew assembleDebug --no-daemon --stacktrace
-          else
-            gradle assembleDebug --no-daemon --stacktrace
-          fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
     artifacts:
       - app/build/outputs/apk/debug/*.apk
     publishing:
