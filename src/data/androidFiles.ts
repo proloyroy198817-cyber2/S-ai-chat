@@ -267,9 +267,9 @@ dependencies {
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@android:drawable/sym_def_app_icon"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChatGPTClone"
         tools:targetApi="31">
@@ -290,21 +290,36 @@ dependencies {
 `,
   },
   {
+    path: 'app/src/main/res/values/colors.xml',
+    category: 'res',
+    description: 'Color resources used across themes and UI',
+    content: `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="green_500">#10A37F</color>
+    <color name="green_700">#0A8565</color>
+    <color name="dark_bg">#202123</color>
+    <color name="dark_surface">#343541</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>
+`,
+  },
+  {
     path: 'app/src/main/res/values/themes.xml',
     category: 'res',
     description: 'Light Mode theme resource file defining Theme.ChatGPTClone',
     content: `<?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme inheriting from MaterialComponents DayNight NoActionBar -->
     <style name="Theme.ChatGPTClone" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
-        <item name="colorPrimary">#10A37F</item>
-        <item name="colorPrimaryVariant">#0A8565</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimary">@color/green_500</item>
+        <item name="colorPrimaryVariant">@color/green_700</item>
+        <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color -->
-        <item name="colorSecondary">#202123</item>
-        <item name="colorSecondaryVariant">#343541</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondary">@color/dark_bg</item>
+        <item name="colorSecondaryVariant">@color/dark_surface</item>
+        <item name="colorOnSecondary">@color/white</item>
         <!-- Status bar color -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
@@ -316,21 +331,41 @@ dependencies {
     category: 'res',
     description: 'Dark Mode theme resource file defining Theme.ChatGPTClone',
     content: `<?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Dark Mode theme inheriting from MaterialComponents DayNight NoActionBar -->
     <style name="Theme.ChatGPTClone" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
-        <item name="colorPrimary">#10A37F</item>
-        <item name="colorPrimaryVariant">#0A8565</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimary">@color/green_500</item>
+        <item name="colorPrimaryVariant">@color/green_700</item>
+        <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color -->
-        <item name="colorSecondary">#202123</item>
-        <item name="colorSecondaryVariant">#343541</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondary">@color/dark_bg</item>
+        <item name="colorSecondaryVariant">@color/dark_surface</item>
+        <item name="colorOnSecondary">@color/white</item>
         <!-- Status bar color for night mode -->
-        <item name="android:statusBarColor">#202123</item>
+        <item name="android:statusBarColor">@color/dark_bg</item>
     </style>
 </resources>
+`,
+  },
+  {
+    path: 'app/src/main/res/xml/backup_rules.xml',
+    category: 'res',
+    description: 'Backup rules configuration file',
+    content: `<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+</full-backup-content>
+`,
+  },
+  {
+    path: 'app/src/main/res/xml/data_extraction_rules.xml',
+    category: 'res',
+    description: 'Data extraction rules configuration file',
+    content: `<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup />
+    <device-transfer />
+</data-extraction-rules>
 `,
   },
   {

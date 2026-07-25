@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme inheriting from MaterialComponents DayNight NoActionBar -->
     <style name="Theme.ChatGPTClone" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color -->
-        <item name="colorPrimary">#10A37F</item>
-        <item name="colorPrimaryVariant">#0A8565</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimary">@color/green_500</item>
+        <item name="colorPrimaryVariant">@color/green_700</item>
+        <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color -->
-        <item name="colorSecondary">#202123</item>
-        <item name="colorSecondaryVariant">#343541</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorSecondary">@color/dark_bg</item>
+        <item name="colorSecondaryVariant">@color/dark_surface</item>
+        <item name="colorOnSecondary">@color/white</item>
         <!-- Status bar color -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
     </style>
