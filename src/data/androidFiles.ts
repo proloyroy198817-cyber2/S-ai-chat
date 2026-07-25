@@ -290,6 +290,60 @@ dependencies {
 `,
   },
   {
+    path: 'app/src/main/res/values/themes.xml',
+    category: 'res',
+    description: 'Light Mode theme resource file defining Theme.ChatGPTClone',
+    content: `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme inheriting from MaterialComponents DayNight NoActionBar -->
+    <style name="Theme.ChatGPTClone" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">#10A37F</item>
+        <item name="colorPrimaryVariant">#0A8565</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">#202123</item>
+        <item name="colorSecondaryVariant">#343541</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
+</resources>
+`,
+  },
+  {
+    path: 'app/src/main/res/values-night/themes.xml',
+    category: 'res',
+    description: 'Dark Mode theme resource file defining Theme.ChatGPTClone',
+    content: `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Mode theme inheriting from MaterialComponents DayNight NoActionBar -->
+    <style name="Theme.ChatGPTClone" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">#10A37F</item>
+        <item name="colorPrimaryVariant">#0A8565</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">#202123</item>
+        <item name="colorSecondaryVariant">#343541</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <!-- Status bar color for night mode -->
+        <item name="android:statusBarColor">#202123</item>
+    </style>
+</resources>
+`,
+  },
+  {
+    path: 'app/src/main/res/values/strings.xml',
+    category: 'res',
+    description: 'Application string resources',
+    content: `<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ChatGPT Clone</string>
+</resources>
+`,
+  },
+  {
     path: 'app/src/main/java/com/example/chatgptclone/ChatGPTApplication.kt',
     category: 'kotlin',
     description: 'Application entry point with Hilt annotation',
