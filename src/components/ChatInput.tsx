@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Image as ImageIcon, X, Square, Sparkles, Globe, FlaskConical } from 'lucide-react';
+import { ArrowUp, Image as ImageIcon, X, Square, Sparkles, Globe, FlaskConical, Mic, MicOff } from 'lucide-react';
 
 interface ChatInputProps {
   onSendMessage: (text: string, imageUrl?: string, isWebSearch?: boolean, isDeepResearch?: boolean) => void;
@@ -18,9 +18,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(false);
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   // Auto resize textarea
   useEffect(() => {
@@ -29,6 +31,67 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`;
     }
   }, [inputText]);
+
+  // Clean up speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  const toggleSpeechRecognition = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please try Google Chrome or Edge.');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = navigator.language || 'en-US';
+
+      const initialText = inputText;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        setInputText(initialText ? `${initialText} ${transcript}` : transcript);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      setIsListening(false);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,6 +112,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleSend = () => {
     if (!inputText.trim() && !attachedImage) return;
     if (isStreaming) return;
+
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
 
     onSendMessage(inputText.trim(), attachedImage || undefined, isWebSearchEnabled, isDeepResearchEnabled);
     setInputText('');
@@ -87,8 +155,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         )}
 
         {/* Mode Indicators */}
-        {(isWebSearchEnabled || isDeepResearchEnabled) && (
-          <div className="flex items-center space-x-2 mb-1.5 px-1 text-xs">
+        {(isWebSearchEnabled || isDeepResearchEnabled || isListening) && (
+          <div className="flex flex-wrap items-center gap-2 mb-1.5 px-1 text-xs">
+            {isListening && (
+              <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-medium animate-pulse">
+                <Mic className="w-3 h-3 text-rose-500" />
+                <span>Listening... Speak your prompt</span>
+              </span>
+            )}
             {isWebSearchEnabled && (
               <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 font-medium">
                 <Globe className="w-3 h-3" />
@@ -111,7 +185,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isDeepResearchEnabled ? "Enter deep research topic..." : "Message ChatGPT..."}
+            placeholder={
+              isListening
+                ? "Listening... Speak now..."
+                : isDeepResearchEnabled
+                ? "Enter deep research topic..."
+                : "Message ChatGPT..."
+            }
             rows={1}
             className="w-full px-2 py-1 text-sm bg-transparent border-none text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-hidden resize-none max-h-40"
             id="input-chat-message"
@@ -137,6 +217,25 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 id="btn-attach-image"
               >
                 <ImageIcon className="w-4 h-4" />
+              </button>
+
+              {/* Microphone Speech-to-Text Button */}
+              <button
+                type="button"
+                onClick={toggleSpeechRecognition}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isListening
+                    ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40 animate-pulse'
+                    : 'hover:bg-stone-100 dark:hover:bg-stone-700 hover:text-stone-700 dark:hover:text-stone-200 text-stone-500 dark:text-stone-400'
+                }`}
+                title={isListening ? "Stop listening" : "Speak to type (Voice input)"}
+                id="btn-mic-speech"
+              >
+                {isListening ? (
+                  <MicOff className="w-4 h-4 text-rose-500" />
+                ) : (
+                  <Mic className="w-4 h-4" />
+                )}
               </button>
 
               {/* Quick Web Search Toggle */}

@@ -6,7 +6,11 @@ export async function downloadAndroidProjectZip(): Promise<void> {
 
   // Add every file to zip
   ANDROID_PROJECT_FILES.forEach((file) => {
-    zip.file(file.path, file.content);
+    if (file.isBinary) {
+      zip.file(file.path, file.content, { base64: true });
+    } else {
+      zip.file(file.path, file.content);
+    }
   });
 
   // Generate blob and trigger browser download

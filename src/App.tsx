@@ -55,10 +55,53 @@ export default function App() {
     saveThreads(threads);
   }, [threads]);
 
+  // Auto-save trigger: periodically sync threads to local storage during active streaming & before unload
+  useEffect(() => {
+    if (!isStreaming) return;
+
+    const autoSaveInterval = setInterval(() => {
+      saveThreads(threads);
+    }, 1000);
+
+    const handleBeforeUnload = () => {
+      saveThreads(threads);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(autoSaveInterval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isStreaming, threads]);
+
   // Sync settings to storage
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
+
+  // Keyboard navigation shortcuts (Ctrl/Cmd+N, Ctrl/Cmd+K, Esc)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (isCmdOrCtrl && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleNewChat();
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      } else if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsSettingsOpen(false);
+        setIsOnboardingOpen(false);
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [settings.selectedModel]);
 
   // Auto scroll to bottom of messages
   const scrollToBottom = () => {
@@ -365,6 +408,24 @@ export default function App() {
     }
   };
 
+  // Copy full conversation formatted text to clipboard
+  const handleCopyConversation = async () => {
+    if (!activeThread || activeThread.messages.length === 0) return;
+    const formattedText = activeThread.messages
+      .map((msg) => {
+        const roleLabel = msg.role === 'user' ? 'User' : 'ChatGPT';
+        const timestamp = new Date(msg.timestamp).toLocaleString();
+        return `[${roleLabel} - ${timestamp}]\n${msg.content}`;
+      })
+      .join('\n\n---\n\n');
+
+    try {
+      await navigator.clipboard.writeText(formattedText);
+    } catch (err) {
+      console.error('Failed to copy conversation:', err);
+    }
+  };
+
   const lastUserMsgId = [...(activeThread?.messages || [])]
     .reverse()
     .find((m) => m.role === 'user')?.id;
@@ -379,6 +440,8 @@ export default function App() {
         onNewChat={handleNewChat}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onCopyConversation={handleCopyConversation}
+        hasMessages={Boolean(activeThread && activeThread.messages.length > 0)}
         settings={settings}
         onUpdateSettings={setSettings}
         activeTitle={activeThread?.title}

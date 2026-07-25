@@ -1,5 +1,5 @@
-import React from 'react';
-import { Menu, Plus, Settings, Search, Smartphone, FolderGit2, Moon, Sun, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Plus, Settings, Search, Smartphone, FolderGit2, Moon, Sun, Copy, Check } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface HeaderBarProps {
@@ -9,6 +9,8 @@ interface HeaderBarProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onOpenSearch: () => void;
+  onCopyConversation?: () => void;
+  hasMessages?: boolean;
   settings: AppSettings;
   onUpdateSettings: (s: AppSettings) => void;
   activeTitle?: string;
@@ -21,17 +23,27 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   onNewChat,
   onOpenSettings,
   onOpenSearch,
+  onCopyConversation,
+  hasMessages = false,
   settings,
   onUpdateSettings,
   activeTitle = 'ChatGPT',
 }) => {
   const isDark = settings.themeMode === 'dark';
+  const [isCopied, setIsCopied] = useState(false);
 
   const toggleTheme = () => {
     onUpdateSettings({
       ...settings,
       themeMode: isDark ? 'light' : 'dark',
     });
+  };
+
+  const handleCopy = () => {
+    if (!onCopyConversation || !hasMessages) return;
+    onCopyConversation();
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
@@ -94,6 +106,26 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       {/* Right Actions */}
       <div className="flex items-center space-x-1">
+        <button
+          onClick={handleCopy}
+          disabled={!hasMessages}
+          className={`p-2 rounded-lg transition-colors ${
+            isCopied
+              ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+              : 'hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 disabled:opacity-30 disabled:hover:bg-transparent'
+          }`}
+          title={
+            isCopied
+              ? 'Copied conversation to clipboard!'
+              : hasMessages
+              ? 'Copy entire conversation'
+              : 'No messages to copy'
+          }
+          id="btn-copy-conversation-header"
+        >
+          {isCopied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+        </button>
+
         <button
           onClick={onOpenSearch}
           className="p-2 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors"

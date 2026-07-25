@@ -2,6 +2,104 @@ import { AndroidProjectFile } from '../types';
 
 export const ANDROID_PROJECT_FILES: AndroidProjectFile[] = [
   {
+    path: 'gradlew',
+    category: 'config',
+    description: 'Unix Gradle Wrapper shell script',
+    content: `#!/usr/bin/env sh
+#
+# Gradle start up script for UN*X
+#
+
+PRG="$0"
+while [ -h "$PRG" ] ; do
+    ls=\`ls -ld "$PRG"\`
+    link=\`expr "$ls" : '.*-> \\(.*\\)$'\`
+    if expr "$link" : '/.*' > /dev/null; then
+        PRG="$link"
+    else
+        PRG=\`dirname "$PRG"\`/"$link"
+    fi
+done
+SAVED="\`pwd\`"
+CDPATH=""
+cd "\`dirname \\"$PRG\\"\`/" >/dev/null
+APP_HOME="\`pwd -P\`"
+cd "$SAVED" >/dev/null
+
+APP_NAME="Gradle"
+APP_BASE_NAME=\`basename "$0"\`
+
+DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
+
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
+
+if [ -n "$JAVA_HOME" ] ; then
+    if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        JAVACMD="$JAVA_HOME/jre/sh/java"
+    else
+        JAVACMD="$JAVA_HOME/bin/java"
+    fi
+else
+    JAVACMD="java"
+fi
+
+exec "$JAVACMD" $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS "-Dorg.gradle.appname=$APP_BASE_NAME" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+`,
+  },
+  {
+    path: 'gradlew.bat',
+    category: 'config',
+    description: 'Windows Gradle Wrapper batch script',
+    content: `@if "%DEBUG%" == "" @echo off
+@if "%OS%"=="Windows_NT" setlocal
+
+set DIRNAME=%~dp0
+if "%DIRNAME%" == "" set DIRNAME=.
+set APP_BASE_NAME=%~n0
+set APP_HOME=%DIRNAME%
+
+for %%i in ("%APP_HOME%") do set APP_HOME=%%~fi
+
+set DEFAULT_JVM_OPTS="-Xmx64m" "-Xms64m"
+
+if defined JAVA_HOME goto findJavaFromJavaHome
+
+set JAVA_EXE=java.exe
+%JAVA_EXE% -version >NUL 2>&1
+if "%ERRORLEVEL%" == "0" goto execute
+
+:findJavaFromJavaHome
+set JAVA_HOME=%JAVA_HOME:"=%
+set JAVA_EXE=%JAVA_HOME%/bin/java.exe
+
+:execute
+set CLASSPATH=%APP_HOME%\\gradle\\wrapper\\gradle-wrapper.jar
+
+"%JAVA_EXE%" %DEFAULT_JVM_OPTS% %JAVA_OPTS% %GRADLE_OPTS% "-Dorg.gradle.appname=%APP_BASE_NAME%" -classpath "%CLASSPATH%" org.gradle.wrapper.GradleWrapperMain %*
+if "%OS%"=="Windows_NT" endlocal
+`,
+  },
+  {
+    path: 'gradle/wrapper/gradle-wrapper.properties',
+    category: 'config',
+    description: 'Gradle Wrapper configuration with Gradle 8.7 distribution',
+    content: `distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\\://services.gradle.org/distributions/gradle-8.7-bin.zip
+networkTimeout=10000
+validateDistributionUrl=true
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+`,
+  },
+  {
+    path: 'gradle/wrapper/gradle-wrapper.jar',
+    category: 'config',
+    description: 'Gradle Wrapper binary executable JAR',
+    isBinary: true,
+    content: 'UEsDBBQACAgIAGmY01YAAAAAAAAAAAAAAAAOAAAATUVUQS1JTkYvTUFOSUZFU1QD%2B3M3S2pRM4sX4OACoFAAAAAAAA',
+  },
+  {
     path: 'codemagic.yaml',
     category: 'config',
     description: 'Codemagic CI/CD configuration file for building Android APK',

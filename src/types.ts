@@ -46,5 +46,6 @@ export interface AndroidProjectFile {
   content: string;
   category: 'config' | 'manifest' | 'kotlin' | 'compose' | 'res' | 'di' | 'db';
   description: string;
+  isBinary?: boolean;
 }
 
