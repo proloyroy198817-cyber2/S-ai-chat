@@ -1,0 +1,293 @@
+import React, { useState } from 'react';
+import { Copy, Check, Edit3, RotateCcw, Trash2, Bot, User, AlertCircle, ExternalLink, Globe } from 'lucide-react';
+import { ChatMessage } from '../types';
+import { CodeBlock } from './CodeBlock';
+
+interface ChatBubbleProps {
+  message: ChatMessage;
+  isLastUserMessage?: boolean;
+  onEditMessage?: (id: string, newText: string) => void;
+  onRegenerate?: () => void;
+  onDeleteMessage?: (id: string) => void;
+}
+
+export const ChatBubble: React.FC<ChatBubbleProps> = ({
+  message,
+  isLastUserMessage,
+  onEditMessage,
+  onRegenerate,
+  onDeleteMessage,
+}) => {
+  const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(message.content);
+
+  const isUser = message.role === 'user';
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(message.content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editText.trim() && onEditMessage) {
+      onEditMessage(message.id, editText.trim());
+      setIsEditing(false);
+    }
+  };
+
+  // Helper parser for markdown code blocks & standard markdown text
+  const renderFormattedContent = (content: string) => {
+    if (!content) return null;
+
+    // Split by markdown code fences
+    const codeBlockRegex = /```(\w*)\n([\s\S]*?)```/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({
+          type: 'text',
+          val: content.substring(lastIndex, match.index),
+        });
+      }
+      parts.push({
+        type: 'code',
+        language: match[1] || 'kotlin',
+        code: match[2].trim(),
+      });
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < content.length) {
+      parts.push({
+        type: 'text',
+        val: content.substring(lastIndex),
+      });
+    }
+
+    return (
+      <div className="space-y-2 leading-relaxed text-sm">
+        {parts.map((p, idx) => {
+          if (p.type === 'code') {
+            return <CodeBlock key={idx} language={p.language} code={p.code} />;
+          }
+
+          // Simple markdown line parsing for bold, lists, and headers
+          const lines = p.val.split('\n');
+          return (
+            <div key={idx} className="space-y-1">
+              {lines.map((line, lIdx) => {
+                if (line.startsWith('### ')) {
+                  return (
+                    <h3 key={lIdx} className="font-bold text-base mt-2 mb-1 text-stone-900 dark:text-stone-100">
+                      {line.replace('### ', '')}
+                    </h3>
+                  );
+                }
+                if (line.startsWith('## ')) {
+                  return (
+                    <h2 key={lIdx} className="font-bold text-lg mt-3 mb-1 text-stone-900 dark:text-stone-100">
+                      {line.replace('## ', '')}
+                    </h2>
+                  );
+                }
+                if (line.startsWith('- ') || line.startsWith('* ')) {
+                  return (
+                    <div key={lIdx} className="flex items-start space-x-2 pl-2 my-0.5">
+                      <span className="text-emerald-500 font-bold">•</span>
+                      <span>{renderInlineMarkdown(line.substring(2))}</span>
+                    </div>
+                  );
+                }
+                if (line.trim() === '') {
+                  return <div key={lIdx} className="h-1" />;
+                }
+                return <p key={lIdx}>{renderInlineMarkdown(line)}</p>;
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderInlineMarkdown = (text: string) => {
+    // Bold regex **text**
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-bold text-stone-900 dark:text-stone-100">{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+      }
+      if (part.startsWith('`') && part.endsWith('`')) {
+        return (
+          <code key={i} className="px-1.5 py-0.5 bg-stone-200 dark:bg-stone-800 text-emerald-600 dark:text-emerald-400 rounded text-xs font-mono">
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      return part;
+    });
+  };
+
+  return (
+    <div className={`group flex flex-col my-3 px-1 transition-all ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex items-start space-x-2 max-w-[92%] sm:max-w-[85%] ${isUser ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}>
+        {/* Avatar */}
+        <div
+          className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 shadow-xs ${
+            isUser
+              ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900'
+              : 'bg-emerald-600 text-white'
+          }`}
+        >
+          {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+        </div>
+
+        {/* Bubble Content */}
+        <div
+          className={`relative p-3.5 rounded-2xl shadow-xs transition-colors ${
+            isUser
+              ? 'bg-stone-800 dark:bg-stone-700 text-stone-100 rounded-tr-xs'
+              : 'bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 border border-stone-200/80 dark:border-stone-700/60 rounded-tl-xs'
+          }`}
+        >
+          {/* Image preview if user sent image */}
+          {message.imageUrl && (
+            <div className="mb-2.5 overflow-hidden rounded-xl max-w-xs border border-stone-300 dark:border-stone-600">
+              <img src={message.imageUrl} alt="Attachment" className="w-full h-auto object-cover max-h-60" />
+            </div>
+          )}
+
+          {/* Edit Mode for User Message */}
+          {isEditing ? (
+            <form onSubmit={handleSaveEdit} className="space-y-2 min-w-[260px]">
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={3}
+                className="w-full p-2 text-xs bg-stone-900 text-stone-100 border border-emerald-500 rounded-lg focus:outline-hidden"
+              />
+              <div className="flex justify-end space-x-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-2.5 py-1 text-stone-400 hover:text-white rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-medium"
+                >
+                  Save & Submit
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div>{renderFormattedContent(message.content)}</div>
+          )}
+
+          {/* Citations Box */}
+          {message.citations && message.citations.length > 0 && (
+            <div className="mt-3 pt-2.5 border-t border-stone-200 dark:border-stone-700/60 space-y-1.5">
+              <div className="flex items-center space-x-1.5 text-xs font-bold text-stone-700 dark:text-stone-300">
+                <Globe className="w-3.5 h-3.5 text-sky-500" />
+                <span>Web Sources & Citations</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                {message.citations.map((c, i) => (
+                  <a
+                    key={i}
+                    href={c.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between p-2 rounded-xl bg-stone-50 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-700 hover:border-sky-500 transition-colors group/cite"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <div className="font-semibold text-sky-600 dark:text-sky-400 truncate text-[11px]">
+                        [{i + 1}] {c.title}
+                      </div>
+                      {c.snippet && (
+                        <p className="text-[10px] text-stone-500 dark:text-stone-400 line-clamp-1 mt-0.5">
+                          {c.snippet}
+                        </p>
+                      )}
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-stone-400 group-hover/cite:text-sky-500 shrink-0" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Streaming Indicator */}
+          {message.isStreaming && (
+            <div className="flex items-center space-x-1.5 mt-2 text-xs text-emerald-500 font-medium animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Streaming response...</span>
+            </div>
+          )}
+
+          {/* Error Indicator */}
+          {message.error && (
+            <div className="flex items-center space-x-1.5 mt-2 text-xs text-rose-500">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>{message.error}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Message Toolbar Actions */}
+      {!isEditing && (
+        <div className={`flex items-center space-x-1 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 text-xs ${isUser ? 'mr-10' : 'ml-10'}`}>
+          <button
+            onClick={handleCopy}
+            className="p-1 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
+            title="Copy Message"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+
+          {isUser && isLastUserMessage && onEditMessage && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
+              title="Edit & Regenerate"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {!isUser && onRegenerate && (
+            <button
+              onClick={onRegenerate}
+              className="p-1 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
+              title="Regenerate Response"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {onDeleteMessage && (
+            <button
+              onClick={() => onDeleteMessage(message.id)}
+              className="p-1 hover:text-rose-500 rounded transition-colors"
+              title="Delete Message"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

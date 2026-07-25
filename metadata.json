@@ -1,0 +1,6 @@
+{
+  "name": "ChatGPT Mobile App & Android Exporter",
+  "description": "Full-featured ChatGPT mobile clone with real-time streaming, vision, conversation search, and exportable Kotlin Jetpack Compose Android codebase with Codemagic CI/CD.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
