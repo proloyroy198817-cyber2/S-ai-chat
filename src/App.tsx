@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChatMessage, ChatThread, AppSettings } from './types';
+import { ChatMessage, ChatThread, AppSettings, AttachedFile } from './types';
 import {
   loadSettings,
   saveSettings,
@@ -187,6 +187,7 @@ export default function App() {
   const handleSendMessage = async (
     userText: string,
     imageUrl?: string,
+    attachedFiles?: AttachedFile[],
     isWebSearch?: boolean,
     isDeepResearch?: boolean
   ) => {
@@ -199,6 +200,7 @@ export default function App() {
       content: userText,
       timestamp: Date.now(),
       imageUrl,
+      attachedFiles,
     };
 
     const assistantMsgId = `msg-${Date.now() + 1}`;
@@ -214,7 +216,7 @@ export default function App() {
     // Auto-update title if it's the first user message in thread
     const newTitle =
       activeThread.messages.length === 0
-        ? userText.slice(0, 32) || 'Chat Conversation'
+        ? userText.slice(0, 32) || (attachedFiles?.[0]?.name ? `File: ${attachedFiles[0].name}` : 'Chat Conversation')
         : activeThread.title;
 
     setThreads((prev) =>
@@ -238,11 +240,31 @@ export default function App() {
     abortControllerRef.current = abortController;
 
     try {
-      const messagesPayload = [...activeThread.messages, userMsg].map((m) => ({
-        role: m.role,
-        content: m.content,
-        imageUrl: m.imageUrl,
-      }));
+      const messagesPayload = [...activeThread.messages, userMsg].map((m) => {
+        let fullText = m.content || '';
+        if (m.attachedFiles && m.attachedFiles.length > 0) {
+          const fileDetails = m.attachedFiles
+            .map((f) => {
+              if (f.textContent) {
+                return `\n\n[ATTACHED FILE: ${f.name}]\n\`\`\`\n${f.textContent}\n\`\`\``;
+              }
+              return `\n\n[ATTACHED FILE: ${f.name} (${f.type}, ${f.size} bytes)]`;
+            })
+            .join('');
+          fullText += fileDetails;
+        }
+
+        const primaryImage =
+          m.imageUrl ||
+          m.attachedFiles?.find((f) => f.dataUrl && f.type.startsWith('image/'))?.dataUrl;
+
+        return {
+          role: m.role,
+          content: fullText,
+          imageUrl: primaryImage,
+          attachedFiles: m.attachedFiles,
+        };
+      });
 
       const clientTime = new Date().toLocaleString();
       const clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -495,7 +517,7 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => handleSendMessage('Latest updates in Android 15 & Jetpack Compose 2026', undefined, true, false)}
+                    onClick={() => handleSendMessage('Latest updates in Android 15 & Jetpack Compose 2026', undefined, undefined, true, false)}
                     className="p-3 rounded-2xl bg-white dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700/60 hover:border-sky-500 text-xs text-stone-700 dark:text-stone-300 transition-all shadow-2xs"
                   >
                     <span className="font-semibold block text-stone-900 dark:text-stone-100">🌐 Quick Web Search</span>
@@ -503,7 +525,7 @@ export default function App() {
                   </button>
 
                   <button
-                    onClick={() => handleSendMessage('Deep research on Jetpack Compose vs Flutter cross-platform architecture in 2026', undefined, false, true)}
+                    onClick={() => handleSendMessage('Deep research on Jetpack Compose vs Flutter cross-platform architecture in 2026', undefined, undefined, false, true)}
                     className="p-3 rounded-2xl bg-white dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700/60 hover:border-purple-500 text-xs text-stone-700 dark:text-stone-300 transition-all shadow-2xs"
                   >
                     <span className="font-semibold block text-stone-900 dark:text-stone-100">🔬 Deep Research Report</span>

@@ -1,7 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Check, Edit3, RotateCcw, Trash2, Bot, User, AlertCircle, ExternalLink, Globe, Volume2, VolumeX } from 'lucide-react';
-import { ChatMessage } from '../types';
+import {
+  Copy,
+  Check,
+  Edit3,
+  RotateCcw,
+  Trash2,
+  Bot,
+  User,
+  AlertCircle,
+  ExternalLink,
+  Globe,
+  Volume2,
+  VolumeX,
+  Paperclip,
+  FileText,
+  FileCode,
+  File,
+  Image as ImageIcon,
+  Download,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
+import { ChatMessage, AttachedFile } from '../types';
 import { CodeBlock } from './CodeBlock';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -27,6 +54,28 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
     message.feedback || null
   );
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+
+  const toggleFileExpansion = (fileId: string) => {
+    setExpandedFiles((prev) => ({ ...prev, [fileId]: !prev[fileId] }));
+  };
+
+  const getFileIcon = (file: AttachedFile) => {
+    if (file.type.startsWith('image/')) {
+      return <ImageIcon className="w-4 h-4 text-emerald-400" />;
+    }
+    if (
+      file.name.match(/\.(js|ts|tsx|jsx|py|java|kt|gradle|xml|json|html|css)$/i) ||
+      file.type.includes('javascript') ||
+      file.type.includes('json')
+    ) {
+      return <FileCode className="w-4 h-4 text-sky-400" />;
+    }
+    if (file.type.startsWith('text/') || file.name.match(/\.(txt|md|csv|log)$/i)) {
+      return <FileText className="w-4 h-4 text-amber-400" />;
+    }
+    return <File className="w-4 h-4 text-purple-400" />;
+  };
 
   useEffect(() => {
     setFeedbackState(message.feedback || null);
@@ -221,10 +270,93 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               : 'bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 border border-stone-200/80 dark:border-stone-700/60 rounded-tl-xs'
           }`}
         >
-          {/* Image preview if user sent image */}
-          {message.imageUrl && (
+          {/* Image preview if user sent single image directly */}
+          {message.imageUrl && (!message.attachedFiles || message.attachedFiles.length === 0) && (
             <div className="mb-2.5 overflow-hidden rounded-xl max-w-xs border border-stone-300 dark:border-stone-600">
               <img src={message.imageUrl} alt="Attachment" className="w-full h-auto object-cover max-h-60" />
+            </div>
+          )}
+
+          {/* Render Attached Files Cards */}
+          {message.attachedFiles && message.attachedFiles.length > 0 && (
+            <div className="mb-3 space-y-2">
+              <div className="flex items-center space-x-1.5 text-xs font-semibold opacity-80 mb-1">
+                <Paperclip className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Attached Files ({message.attachedFiles.length})</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {message.attachedFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className={`p-2.5 rounded-xl border transition-all ${
+                      isUser
+                        ? 'bg-stone-900/60 border-stone-700/80 text-stone-100'
+                        : 'bg-stone-50 dark:bg-stone-900/70 border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 min-w-0 pr-2">
+                        <div className="p-1.5 rounded-lg bg-stone-800/80 dark:bg-stone-800 shrink-0">
+                          {getFileIcon(file)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs truncate">{file.name}</p>
+                          <p className="text-[10px] opacity-60">{formatFileSize(file.size)}</p>
+                        </div>
+                      </div>
+
+                      {/* File Action Controls */}
+                      <div className="flex items-center space-x-1 shrink-0">
+                        {file.textContent && (
+                          <button
+                            type="button"
+                            onClick={() => toggleFileExpansion(file.id)}
+                            className="p-1.5 rounded-lg hover:bg-stone-700/50 text-xs font-medium flex items-center space-x-1 transition-colors"
+                            title="Preview file content"
+                          >
+                            <span className="text-[11px] hidden sm:inline">
+                              {expandedFiles[file.id] ? 'Hide Content' : 'View Content'}
+                            </span>
+                            {expandedFiles[file.id] ? (
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        )}
+
+                        {file.dataUrl && (
+                          <a
+                            href={file.dataUrl}
+                            download={file.name}
+                            className="p-1.5 rounded-lg hover:bg-stone-700/50 text-xs transition-colors"
+                            title="Download file"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Image Thumbnail inside attachment card */}
+                    {file.dataUrl && file.type.startsWith('image/') && (
+                      <div className="mt-2 overflow-hidden rounded-lg border border-stone-700/50 max-w-sm">
+                        <img src={file.dataUrl} alt={file.name} className="w-full max-h-52 object-cover" />
+                      </div>
+                    )}
+
+                    {/* Collapsible Text Content View */}
+                    {file.textContent && expandedFiles[file.id] && (
+                      <div className="mt-2.5 p-2 bg-stone-950/90 text-stone-200 rounded-lg text-xs font-mono max-h-60 overflow-y-auto whitespace-pre-wrap border border-stone-800">
+                        <div className="text-[10px] text-stone-500 uppercase font-bold mb-1 pb-1 border-b border-stone-800">
+                          {file.name} Preview
+                        </div>
+                        {file.textContent}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

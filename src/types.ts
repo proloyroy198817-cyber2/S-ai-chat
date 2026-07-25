@@ -6,12 +6,22 @@ export interface CitationSource {
   snippet?: string;
 }
 
+export interface AttachedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  dataUrl?: string;
+  textContent?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
   timestamp: number;
   imageUrl?: string;
+  attachedFiles?: AttachedFile[];
   isStreaming?: boolean;
   error?: string;
   citations?: CitationSource[];

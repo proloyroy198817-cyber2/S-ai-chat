@@ -1,11 +1,38 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Image as ImageIcon, X, Square, Sparkles, Globe, FlaskConical, Mic, MicOff } from 'lucide-react';
+import {
+  ArrowUp,
+  Image as ImageIcon,
+  Paperclip,
+  X,
+  Square,
+  Sparkles,
+  Globe,
+  FlaskConical,
+  Mic,
+  MicOff,
+  FileText,
+  FileCode,
+  File,
+} from 'lucide-react';
+import { AttachedFile } from '../types';
 
 interface ChatInputProps {
-  onSendMessage: (text: string, imageUrl?: string, isWebSearch?: boolean, isDeepResearch?: boolean) => void;
+  onSendMessage: (
+    text: string,
+    imageUrl?: string,
+    attachedFiles?: AttachedFile[],
+    isWebSearch?: boolean,
+    isDeepResearch?: boolean
+  ) => void;
   isStreaming: boolean;
   onStopGeneration: () => void;
   selectedModel: string;
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -16,11 +43,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [inputText, setInputText] = useState('');
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(false);
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const recognitionRef = useRef<any>(null);
 
@@ -93,24 +122,94 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processFile = (file: File) => {
+    const isImage = file.type.startsWith('image/');
+    const fileId = `file-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file.');
-      return;
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        if (!attachedImage) {
+          setAttachedImage(dataUrl);
+        }
+        const newAttachedFile: AttachedFile = {
+          id: fileId,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'image/png',
+          dataUrl,
+        };
+        setAttachedFiles((prev) => [...prev, newAttachedFile]);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Text / Document / Code files
+      const isTextLike =
+        file.type.startsWith('text/') ||
+        file.type.includes('json') ||
+        file.type.includes('xml') ||
+        file.type.includes('javascript') ||
+        file.type.includes('csv') ||
+        file.name.match(/\.(txt|md|js|ts|tsx|jsx|py|java|kt|gradle|xml|json|csv|html|css|yaml|yml|log)$/i);
+
+      if (isTextLike) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const textContent = reader.result as string;
+          const newAttachedFile: AttachedFile = {
+            id: fileId,
+            name: file.name,
+            size: file.size,
+            type: file.type || 'text/plain',
+            textContent,
+          };
+          setAttachedFiles((prev) => [...prev, newAttachedFile]);
+        };
+        reader.readAsText(file);
+      } else {
+        // Binary/PDF/other files
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          const newAttachedFile: AttachedFile = {
+            id: fileId,
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/octet-stream',
+            dataUrl,
+          };
+          setAttachedFiles((prev) => [...prev, newAttachedFile]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      processFile(files[i]);
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAttachedImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // Reset input value to allow re-selection
+    e.target.value = '';
+  };
+
+  const removeFile = (id: string) => {
+    setAttachedFiles((prev) => {
+      const remaining = prev.filter((f) => f.id !== id);
+      // If we removed the current primary attached image, update attachedImage state
+      const remainingImage = remaining.find((f) => f.type.startsWith('image/'));
+      setAttachedImage(remainingImage?.dataUrl || null);
+      return remaining;
+    });
   };
 
   const handleSend = () => {
-    if (!inputText.trim() && !attachedImage) return;
+    if (!inputText.trim() && !attachedImage && attachedFiles.length === 0) return;
     if (isStreaming) return;
 
     if (isListening && recognitionRef.current) {
@@ -118,9 +217,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       setIsListening(false);
     }
 
-    onSendMessage(inputText.trim(), attachedImage || undefined, isWebSearchEnabled, isDeepResearchEnabled);
+    onSendMessage(
+      inputText.trim(),
+      attachedImage || undefined,
+      attachedFiles.length > 0 ? attachedFiles : undefined,
+      isWebSearchEnabled,
+      isDeepResearchEnabled
+    );
+
     setInputText('');
     setAttachedImage(null);
+    setAttachedFiles([]);
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -133,24 +240,62 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const getFileIcon = (file: AttachedFile) => {
+    if (file.type.startsWith('image/')) {
+      return <ImageIcon className="w-4 h-4 text-emerald-500" />;
+    }
+    if (
+      file.name.match(/\.(js|ts|tsx|jsx|py|java|kt|gradle|xml|json|html|css)$/i) ||
+      file.type.includes('javascript') ||
+      file.type.includes('json')
+    ) {
+      return <FileCode className="w-4 h-4 text-sky-500" />;
+    }
+    if (file.type.startsWith('text/') || file.name.match(/\.(txt|md|csv|log)$/i)) {
+      return <FileText className="w-4 h-4 text-amber-500" />;
+    }
+    return <File className="w-4 h-4 text-purple-500" />;
+  };
+
   return (
     <div className="sticky bottom-0 z-10 w-full px-3 py-2 bg-stone-50/90 dark:bg-stone-900/90 backdrop-blur-md border-t border-stone-200 dark:border-stone-800">
       <div className="max-w-3xl mx-auto">
-        {/* Attachment preview if image added */}
-        {attachedImage && (
-          <div className="relative inline-block mb-2 group">
-            <img
-              src={attachedImage}
-              alt="Preview"
-              className="w-16 h-16 object-cover rounded-xl border border-stone-300 dark:border-stone-700 shadow-xs"
-            />
-            <button
-              onClick={() => setAttachedImage(null)}
-              className="absolute -top-1.5 -right-1.5 p-1 bg-rose-600 text-white rounded-full shadow-md hover:bg-rose-500 transition-colors"
-              title="Remove image"
-            >
-              <X className="w-3 h-3" />
-            </button>
+        {/* Attached Files & Image Previews */}
+        {attachedFiles.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-2 p-1 max-h-36 overflow-y-auto">
+            {attachedFiles.map((file) => (
+              <div
+                key={file.id}
+                className="relative flex items-center space-x-2 pl-2 pr-7 py-1.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl shadow-2xs text-xs font-medium text-stone-700 dark:text-stone-200 group transition-all hover:border-emerald-500"
+              >
+                {file.dataUrl && file.type.startsWith('image/') ? (
+                  <img
+                    src={file.dataUrl}
+                    alt={file.name}
+                    className="w-7 h-7 object-cover rounded-md border border-stone-200 dark:border-stone-700 shrink-0"
+                  />
+                ) : (
+                  <div className="p-1 rounded-md bg-stone-100 dark:bg-stone-700/80 shrink-0">
+                    {getFileIcon(file)}
+                  </div>
+                )}
+                <div className="min-w-0 max-w-[130px] sm:max-w-[180px]">
+                  <p className="truncate text-xs font-semibold">{file.name}</p>
+                  <p className="text-[10px] text-stone-400 leading-none mt-0.5">
+                    {formatFileSize(file.size)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeFile(file.id)}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-full transition-colors"
+                  title="Remove file"
+                  id={`remove-file-${file.id}`}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -190,6 +335,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 ? "Listening... Speak now..."
                 : isDeepResearchEnabled
                 ? "Enter deep research topic..."
+                : attachedFiles.length > 0
+                ? "Add a message about your attached file(s)..."
                 : "Message ChatGPT..."
             }
             rows={1}
@@ -200,19 +347,39 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {/* Bottom toolbar inside input box */}
           <div className="flex items-center justify-between pt-1.5 mt-1 border-t border-stone-100 dark:border-stone-700/50">
             <div className="flex items-center space-x-1 text-stone-400">
-              {/* Image upload trigger */}
+              {/* Any File Attachment Input */}
               <input
                 type="file"
                 ref={fileInputRef}
-                onChange={handleImageUpload}
+                onChange={handleFileUpload}
+                multiple
+                className="hidden"
+                id="file-input-general"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 hover:text-stone-700 dark:hover:text-stone-200 text-stone-500 dark:text-stone-400 transition-colors flex items-center space-x-1"
+                title="Attach file (PDF, TXT, Code, Images, etc.)"
+                id="btn-attach-file"
+              >
+                <Paperclip className="w-4 h-4" />
+              </button>
+
+              {/* Image Upload Input */}
+              <input
+                type="file"
+                ref={imageInputRef}
+                onChange={handleFileUpload}
                 accept="image/*"
+                multiple
                 className="hidden"
                 id="file-input-image"
               />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                onClick={() => imageInputRef.current?.click()}
+                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 hover:text-stone-700 dark:hover:text-stone-200 text-stone-500 dark:text-stone-400 transition-colors"
                 title="Attach image"
                 id="btn-attach-image"
               >
@@ -297,9 +464,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={!inputText.trim() && !attachedImage}
+                disabled={!inputText.trim() && !attachedImage && attachedFiles.length === 0}
                 className={`p-2 rounded-xl text-white shadow-xs transition-colors ${
-                  inputText.trim() || attachedImage
+                  inputText.trim() || attachedImage || attachedFiles.length > 0
                     ? isDeepResearchEnabled
                       ? 'bg-purple-600 hover:bg-purple-500 cursor-pointer'
                       : isWebSearchEnabled
