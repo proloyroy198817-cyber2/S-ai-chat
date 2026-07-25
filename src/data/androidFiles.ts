@@ -50,6 +50,10 @@ zipStorePath=wrapper/dists
       - name: Set up local.properties
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+      - name: Ensure Gradle Wrapper JAR
+        script: |
+          mkdir -p gradle/wrapper
+          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
       - name: Build Android Debug APK
         script: |
           chmod +x gradlew
