@@ -1,4 +1,3 @@
-# Codemagic CI/CD configuration for Android Jetpack Compose ChatGPT Clone
 workflows:
   android-workflow:
     name: Android ChatGPT Clone Build
