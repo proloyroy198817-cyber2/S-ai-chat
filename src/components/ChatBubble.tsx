@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Copy, Check, Edit3, RotateCcw, Trash2, Bot, User, AlertCircle, ExternalLink, Globe } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { CodeBlock } from './CodeBlock';
@@ -9,6 +9,7 @@ interface ChatBubbleProps {
   onEditMessage?: (id: string, newText: string) => void;
   onRegenerate?: () => void;
   onDeleteMessage?: (id: string) => void;
+  onFeedback?: (id: string, feedback: 'thumbs_up' | 'thumbs_down' | null) => void;
 }
 
 export const ChatBubble: React.FC<ChatBubbleProps> = ({
@@ -17,12 +18,28 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   onEditMessage,
   onRegenerate,
   onDeleteMessage,
+  onFeedback,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content);
+  const [feedbackState, setFeedbackState] = useState<'thumbs_up' | 'thumbs_down' | null>(
+    message.feedback || null
+  );
+
+  useEffect(() => {
+    setFeedbackState(message.feedback || null);
+  }, [message.feedback]);
 
   const isUser = message.role === 'user';
+
+  const handleFeedbackToggle = (type: 'thumbs_up' | 'thumbs_down') => {
+    const nextFeedback = feedbackState === type ? null : type;
+    setFeedbackState(nextFeedback);
+    if (onFeedback) {
+      onFeedback(message.id, nextFeedback);
+    }
+  };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -248,11 +265,16 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
 
       {/* Message Toolbar Actions */}
       {!isEditing && (
-        <div className={`flex items-center space-x-1 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity text-stone-400 text-xs ${isUser ? 'mr-10' : 'ml-10'}`}>
+        <div
+          className={`flex items-center space-x-1 mt-1 px-1 transition-opacity text-stone-400 text-xs ${
+            feedbackState ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          } ${isUser ? 'mr-10' : 'ml-10'}`}
+        >
           <button
             onClick={handleCopy}
             className="p-1 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
             title="Copy Message"
+            id={`copy-btn-${message.id}`}
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
@@ -262,6 +284,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               onClick={() => setIsEditing(true)}
               className="p-1 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
               title="Edit & Regenerate"
+              id={`edit-btn-${message.id}`}
             >
               <Edit3 className="w-3.5 h-3.5" />
             </button>
@@ -272,9 +295,42 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               onClick={onRegenerate}
               className="p-1 hover:text-stone-700 dark:hover:text-stone-200 rounded transition-colors"
               title="Regenerate Response"
+              id={`regenerate-btn-${message.id}`}
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
+          )}
+
+          {/* Emoji Reaction Buttons for Assistant Messages */}
+          {!isUser && !message.isStreaming && (
+            <div className="flex items-center space-x-1 pl-1 ml-0.5 border-l border-stone-200 dark:border-stone-700/60">
+              <button
+                type="button"
+                id={`reaction-thumbs-up-${message.id}`}
+                onClick={() => handleFeedbackToggle('thumbs_up')}
+                className={`p-1 px-1.5 text-xs rounded-md transition-all flex items-center space-x-1 ${
+                  feedbackState === 'thumbs_up'
+                    ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-400 dark:ring-emerald-600 font-medium shadow-xs scale-105'
+                    : 'hover:bg-stone-200/60 dark:hover:bg-stone-700/60 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                }`}
+                title={feedbackState === 'thumbs_up' ? 'Remove thumbs up reaction' : 'Helpful response (👍)'}
+              >
+                <span className="text-sm leading-none">👍</span>
+              </button>
+              <button
+                type="button"
+                id={`reaction-thumbs-down-${message.id}`}
+                onClick={() => handleFeedbackToggle('thumbs_down')}
+                className={`p-1 px-1.5 text-xs rounded-md transition-all flex items-center space-x-1 ${
+                  feedbackState === 'thumbs_down'
+                    ? 'bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 ring-1 ring-rose-400 dark:ring-rose-600 font-medium shadow-xs scale-105'
+                    : 'hover:bg-stone-200/60 dark:hover:bg-stone-700/60 text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                }`}
+                title={feedbackState === 'thumbs_down' ? 'Remove thumbs down reaction' : 'Unhelpful response (👎)'}
+              >
+                <span className="text-sm leading-none">👎</span>
+              </button>
+            </div>
           )}
 
           {onDeleteMessage && (
@@ -282,6 +338,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
               onClick={() => onDeleteMessage(message.id)}
               className="p-1 hover:text-rose-500 rounded transition-colors"
               title="Delete Message"
+              id={`delete-btn-${message.id}`}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

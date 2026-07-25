@@ -408,6 +408,22 @@ export default function App() {
     }
   };
 
+  // Handle emoji reaction feedback for assistant messages
+  const handleFeedback = (msgId: string, feedback: 'thumbs_up' | 'thumbs_down' | null) => {
+    setThreads((prev) =>
+      prev.map((thread) => {
+        if (thread.messages.some((m) => m.id === msgId)) {
+          return {
+            ...thread,
+            updatedAt: Date.now(),
+            messages: thread.messages.map((m) => (m.id === msgId ? { ...m, feedback } : m)),
+          };
+        }
+        return thread;
+      })
+    );
+  };
+
   // Copy full conversation formatted text to clipboard
   const handleCopyConversation = async () => {
     if (!activeThread || activeThread.messages.length === 0) return;
@@ -512,6 +528,7 @@ export default function App() {
                   onEditMessage={handleEditMessage}
                   onRegenerate={handleRegenerate}
                   onDeleteMessage={handleDeleteMessage}
+                  onFeedback={handleFeedback}
                 />
               ))
             )}

@@ -17,6 +17,7 @@ export interface ChatMessage {
   citations?: CitationSource[];
   isDeepResearch?: boolean;
   researchSteps?: string[];
+  feedback?: 'thumbs_up' | 'thumbs_down' | null;
 }
 
 export interface ChatThread {
