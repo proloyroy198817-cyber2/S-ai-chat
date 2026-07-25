@@ -328,6 +328,38 @@ export default function App() {
                   );
                 }
 
+                if (json.error) {
+                  const errMessage =
+                    typeof json.error === 'string'
+                      ? json.error
+                      : json.error.message || 'An error occurred during response generation.';
+                  const isQuota =
+                    errMessage.includes('429') ||
+                    errMessage.includes('RESOURCE_EXHAUSTED') ||
+                    errMessage.includes('Quota exceeded');
+
+                  const friendlyNotice = isQuota
+                    ? `⚠️ **Gemini API Free Tier Quota Reached**\n\nThe shared free tier limit for Gemini API has been reached.\n\n### 💡 Options:\n1. **Add Custom API Key**: Go to **Settings (⚙️)** and paste your personal API key from [Google AI Studio](https://aistudio.google.com/app/apikey).\n2. **Switch Model**: Select **Gemini 2.5 Flash** or **Gemini 1.5 Flash** in the model selector.\n3. **Retry in 15 seconds**.`
+                    : `⚠️ **Notice**: ${errMessage}`;
+
+                  accumulatedContent += (accumulatedContent ? '\n\n' : '') + friendlyNotice;
+                  setThreads((prev) =>
+                    prev.map((t) => {
+                      if (t.id === activeThread.id) {
+                        return {
+                          ...t,
+                          messages: t.messages.map((m) =>
+                            m.id === assistantMsgId
+                              ? { ...m, content: accumulatedContent, isStreaming: false }
+                              : m
+                          ),
+                        };
+                      }
+                      return t;
+                    })
+                  );
+                }
+
                 if (json.text) {
                   accumulatedContent += json.text;
                   setThreads((prev) =>
