@@ -18,20 +18,26 @@ workflows:
       - name: Ensure Gradle Wrapper
         script: |
           mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || [ ! -s gradle/wrapper/gradle-wrapper.jar ]; then
-            if command -v gradle >/dev/null 2>&1; then
-              gradle wrapper --gradle-version 8.7 --distribution-type bin
-            else
+          if command -v gradle >/dev/null 2>&1; then
+            gradle wrapper --gradle-version 8.7 --distribution-type bin
+          else
+            if ! unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+              rm -f gradle/wrapper/gradle-wrapper.jar
               curl -sSL "https://services.gradle.org/distributions/gradle-8.7-bin.zip" -o gradle-bin.zip
-              unzip -q gradle-bin.zip
+              unzip -q -o gradle-bin.zip
               ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7
               rm -rf gradle-8.7 gradle-bin.zip
             fi
           fi
+          chmod +x gradlew
       - name: Build Android Debug APK
         script: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          if [ -f "gradle/wrapper/gradle-wrapper.jar" ] && unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            chmod +x gradlew
+            ./gradlew assembleDebug --no-daemon --stacktrace
+          else
+            gradle assembleDebug --no-daemon --stacktrace
+          fi
     artifacts:
       - app/build/outputs/apk/debug/*.apk
     publishing:
