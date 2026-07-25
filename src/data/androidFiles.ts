@@ -43,21 +43,27 @@ zipStorePath=wrapper/dists
     max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
+      java: 17
       vars:
         PACKAGE_NAME: "com.example.chatgptclone"
-      java: 17
     scripts:
       - name: Set up local.properties
         script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          if [ -n "$ANDROID_SDK_ROOT" ]; then
+            echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          elif [ -n "$ANDROID_HOME" ]; then
+            echo "sdk.dir=$ANDROID_HOME" > local.properties
+          fi
       - name: Ensure Gradle Wrapper JAR
         script: |
           mkdir -p gradle/wrapper
-          curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+          fi
       - name: Build Android Debug APK
         script: |
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug --no-daemon --stacktrace
     artifacts:
       - app/build/outputs/apk/debug/*.apk
     publishing:
@@ -109,11 +115,12 @@ include(":app")
     path: 'gradle.properties',
     category: 'config',
     description: 'Gradle JVM and Kotlin settings',
-    content: `org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+    content: `org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -XX:MaxMetaspaceSize=512m
 android.useAndroidX=true
 android.enableJetifier=true
 kotlin.code.style=official
 android.nonTransitiveRclass=true
+org.gradle.daemon=false
 `,
   },
   {
