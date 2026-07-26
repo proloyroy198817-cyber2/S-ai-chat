@@ -1,6 +1,9 @@
 package com.example.chatgptclone.data.local
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -18,7 +21,7 @@ interface ChatDao {
     suspend fun insertMessage(message: ChatMessageEntity)
 
     @Query("UPDATE chat_threads SET title = :newTitle, updatedAt = :updatedAt WHERE id = :threadId")
-    suspend fun updateThreadTitle(threadId: String, newTitle: String, updatedAt: Long = System.currentTimeMillis())
+    suspend fun updateThreadTitle(threadId: String, newTitle: String, updatedAt: Long)
 
     @Query("DELETE FROM chat_threads WHERE id = :threadId")
     suspend fun deleteThread(threadId: String)

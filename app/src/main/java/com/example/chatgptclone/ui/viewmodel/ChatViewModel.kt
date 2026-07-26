@@ -85,14 +85,39 @@ class ChatViewModel @Inject constructor(
     fun sendMessage(userText: String, imageUrl: String? = null) {
         val currentThreadId = _activeThreadId.value ?: createNewThread()
         val userMsgId = UUID.randomUUID().toString()
-        val userMsg = ChatMessage(userMsgId, currentThreadId, Role.USER, userText, System.currentTimeMillis(), imageUrl)
+        val userMsg = ChatMessage(
+            id = userMsgId,
+            threadId = currentThreadId,
+            role = Role.USER,
+            content = userText,
+            timestamp = System.currentTimeMillis(),
+            imageUrl = imageUrl
+        )
 
         viewModelScope.launch {
-            chatDao.insertMessage(ChatMessageEntity(userMsg.id, userMsg.threadId, userMsg.role.name, userMsg.content, userMsg.timestamp, userMsg.imageUrl))
+            chatDao.insertMessage(
+                ChatMessageEntity(
+                    id = userMsg.id,
+                    threadId = userMsg.threadId,
+                    role = userMsg.role.name,
+                    content = userMsg.content,
+                    timestamp = userMsg.timestamp,
+                    imageUrl = userMsg.imageUrl
+                )
+            )
 
             val assistantMsgId = UUID.randomUUID().toString()
             var assistantContent = ""
-            val assistantMsg = ChatMessage(assistantMsgId, currentThreadId, Role.ASSISTANT, "", System.currentTimeMillis(), isStreaming = true)
+            val assistantMsg = ChatMessage(
+                id = assistantMsgId,
+                threadId = currentThreadId,
+                role = Role.ASSISTANT,
+                content = "",
+                timestamp = System.currentTimeMillis(),
+                imageUrl = null,
+                isStreaming = true,
+                isError = false
+            )
             
             _messages.value = _messages.value + userMsg + assistantMsg
             _isStreaming.value = true
@@ -121,7 +146,14 @@ class ChatViewModel @Inject constructor(
                 } finally {
                     _isStreaming.value = false
                     chatDao.insertMessage(
-                        ChatMessageEntity(assistantMsgId, currentThreadId, Role.ASSISTANT.name, assistantContent, System.currentTimeMillis(), null)
+                        ChatMessageEntity(
+                            id = assistantMsgId,
+                            threadId = currentThreadId,
+                            role = Role.ASSISTANT.name,
+                            content = assistantContent,
+                            timestamp = System.currentTimeMillis(),
+                            imageUrl = null
+                        )
                     )
                 }
             }
