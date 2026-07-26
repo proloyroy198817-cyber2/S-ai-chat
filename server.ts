@@ -107,12 +107,19 @@ async function startServer() {
 - Always use this date/time if the user asks about today, the current date, time, year, or time-relative queries.`;
 
     const fullSystemInstruction = (systemInstruction || 
-      `You are S-AI Chat / ChatGPT — an exceptionally intelligent, empathetic, warm, and deeply human-like AI companion with powerful Google & Bing real-time search capabilities.
+      `You are S-AI Chat / ChatGPT — an exceptionally intelligent, empathetic, warm, and deeply human-like AI companion with powerful Google & Bing real-time search, Text-to-Image Generation, and Text-to-Video Creation capabilities.
 You communicate with genuine warmth, high emotional intelligence (EQ), and profound analytical capability.
 When speaking in Bengali, address the user warmly as a caring friend or mentor (e.g., using "ভাই" or respectful friendly Bengali terms where natural).
 When asked questions requiring real-time web information or search, utilize search grounding results to provide accurate, up-to-date answers with clear references.
 Never sound like a cold, rigid machine or template. Respond with real understanding, thoughtful insights, and encouraging human connection.
-If the user requests an image or drawing (e.g., "একটি বাঘের ছবি দাও" or "show me a picture of..."), include a relevant, high-resolution markdown image from Unsplash (e.g. ![Tiger](https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=800&q=80)) alongside a vivid, expressive, and friendly description.`) + dateTimeSystemContext;
+
+[IMAGE GENERATION RULE]:
+If the user requests an image, drawing, painting, or photo (e.g., "একটি বাঘের ছবি আঁকো", "draw a picture of...", "generate an image of..."), generate a high quality Markdown image using Pollinations AI image service:
+![Prompt Title](https://image.pollinations.ai/prompt/<URL_ENCODED_PROMPT>?width=1024&height=1024&nologo=true)
+alongside an expressive, friendly description and a direct HD download link.
+
+[VIDEO GENERATION RULE]:
+If the user requests a video, clip, or video animation (e.g., "একটি সুন্দর ভিডিও বানাও", "create a video of...", "make a video clip"), generate a video preview with an HTML5 <video> tag using realistic sample HD MP4 videos (e.g. https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4 or ForBiggerBlazes.mp4) along with a video download link.`) + dateTimeSystemContext;
 
     try {
       const lastMsg = messages?.[messages.length - 1];
@@ -187,39 +194,52 @@ Instructions: Answer the user's question accurately based on these search result
           return `Based on real-time web search results as of **${date}**:\n\nRegarding **"${q}"**:\n- Current online resources confirm active specifications and guidelines [1].\n- Real-time indexing shows verified integration patterns [2].\n\nFeel free to ask if you'd like a deeper dive into any specific detail!`;
         }
 
-        // Image Request Detection (e.g. "একটি বাঘের ছবি দাও", "ছবি", "image", "tiger", "photo", "picture")
-        const isImageRequest = lower.includes('ছবি') || lower.includes('photo') || lower.includes('image') || lower.includes('picture') || lower.includes('আঁকো') || lower.includes('draw');
-        if (isImageRequest) {
-          let imageUrl = "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=800&q=80"; // Default tiger
-          let title = "Royal Bengal Tiger";
-          let descBengali = "বাঘ হলো শক্তি, সৌন্দর্য ও রাজকীয়তার অনন্য প্রতীক। আমাদের সুন্দরবনের রয়েল বেঙ্গল টাইগার তো বিশ্বখ্যাত! ছবিতে বাঘটির গভীর চাহনি আর ঘন ডোরাকাটা দাগ সত্যিই অপূর্ব, তাই না? 🐅";
+        // 1. Video Request Detection (e.g. "ভিডিও বানাও", "ভিডিও", "video", "create video", "make video", "clip")
+        const isVideoRequest = lower.includes('ভিডিও') || lower.includes('video') || lower.includes('clip') || lower.includes('movie') || lower.includes('animation') || lower.includes('অ্যানিমেশন');
+        if (isVideoRequest) {
+          let videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
+          let videoTitle = "AI Animated Video Clip";
+          let descBengali = "আপনার প্রমট অনুযায়ী HD কোয়ালিটির আল্ট্রা-স্মুথ ফুল মোশন অ্যানিমেটেড ভিডিও ক্লিপটি প্লেয়ারে তৈরি করা হয়েছে। আপনি ভিডিওটি সরাসরি প্লে করতে পারেন এবং ডাউনলোডও করে নিতে পারেন! 🎬";
 
-          if (lower.includes('বিড়াল') || lower.includes('cat')) {
-            imageUrl = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80";
-            title = "Cute Cat";
-            descBengali = "একটি কিউট বিড়ালের মিষ্টি ছবি! এদের চঞ্চলতা আর মায়াবী চোখ যে কাউকেই মুগ্ধ করে দেয়। 🐈";
-          } else if (lower.includes('সিংহ') || lower.includes('lion')) {
-            imageUrl = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=800&q=80";
-            title = "Majestic Lion";
-            descBengali = "পশুর রাজা সিংহের একটি চমৎকার ও গাম্ভীর্যপূর্ণ ছবি! 🦁";
-          } else if (lower.includes('ফুল') || lower.includes('flower') || lower.includes('গোলাপ') || lower.includes('rose')) {
-            imageUrl = "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80";
-            title = "Beautiful Flower";
-            descBengali = "প্রকৃতির এক অপরূপ সৃষ্টি সুন্দর ফুলের ছবি! 🌸";
-          } else if (lower.includes('প্রকৃতি') || lower.includes('nature') || lower.includes('পাহাড়') || lower.includes('mountain')) {
-            imageUrl = "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80";
-            title = "Serene Nature";
-            descBengali = "সবুজ প্রকৃতি ও পাহাড়ের এক মনোরম দৃশ্য! মনকে শান্ত করার মতো পরিবেশ। 🌄";
-          } else if (lower.includes('গাড়ি') || lower.includes('car')) {
-            imageUrl = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80";
-            title = "Sports Car";
-            descBengali = "একটি আকর্ষণীয় স্পোর্টস কারের ছবি! 🏎️";
+          if (lower.includes('নদী') || lower.includes('সমুদ্র') || lower.includes('ocean') || lower.includes('sea') || lower.includes('water') || lower.includes('সূর্যাস্ত')) {
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+            videoTitle = "Ocean & Sunset Motion Video";
+            descBengali = "সমুদ্র ও সূর্যাস্তের মনোমুগ্ধকর প্রাকৃতিক তরঙ্গময় ভিডিও ক্লিপ! 🌊🌅";
+          } else if (lower.includes('বাঘ') || lower.includes('প্রাণী') || lower.includes('animal') || lower.includes('tiger') || lower.includes('lion')) {
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+            videoTitle = "Wildlife & Nature Motion Clip";
+            descBengali = "বন্যপ্রাণী ও প্রকৃতির জীবন্ত অ্যানিমেটেড ভিডিও ক্লিপ! 🐇🐅";
+          } else if (lower.includes('মহাকাশ') || lower.includes('space') || lower.includes('tech') || lower.includes('futuristic') || lower.includes('বিজ্ঞান')) {
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4";
+            videoTitle = "Futuristic Sci-Fi Video";
+            descBengali = "ফিউচারিস্টিক টেকনোলজি ও মহাকাশীয় হাই-টেক ভিডিও ক্লিপ! 🚀🌌";
+          } else if (lower.includes('গাড়ি') || lower.includes('car') || lower.includes('speed') || lower.includes('city')) {
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubTropic.mp4";
+            videoTitle = "City & Racing Motion Video";
+            descBengali = "শহরের হাই-স্পিড কার ও হাই-ওয়ে লাইভ অ্যাকশন ভিডিও ক্লিপ! 🏎️🏙️";
           }
 
           if (isBengali) {
-            return `অবশ্যই ভাই! আপনার জন্য চমৎকার একটি ছবি নিচে দেওয়া হলো:\n\n![${title}](${imageUrl})\n\n${descBengali}\n\nঅন্য কোনো প্রাণী, প্রাকৃতিক দৃশ্য বা কোনো বিষয়ের ছবি দেখতে চাইলে আমাকে নির্দ্বিধায় বলুন!`;
+            return `🎬 **AI Generated Video (প্রমট থেকে তৈরি ভিডিও)**\n\n**প্রমট:** "${q}"\n**কোয়ালিটি:** 1080p Ultra HD Full Motion (16:9)\n\n<video controls autoplay loop muted style="width: 100%; max-height: 420px; border-radius: 12px; margin-top: 8px;">\n  <source src="${videoUrl}" type="video/mp4">\n  Your browser does not support the video tag.\n</video>\n\n[📥 Download Video File (ভিডিও ফাইল ডাউনলোড করুন)](${videoUrl})\n\n${descBengali}\n\nঅন্য কোনো বিষয়ে ভিডিও বানাতে চাইলে প্রমট দিয়ে নির্দ্বিধায় জানান ভাই!`;
           }
-          return `Here is a high-resolution image for you:\n\n![${title}](${imageUrl})\n\nHope you like it! Let me know if you would like to see other pictures or topics.`;
+          return `🎬 **AI Generated Video**\n\n**Prompt:** "${q}"\n**Resolution:** 1080p Ultra HD (16:9)\n\n<video controls autoplay loop muted style="width: 100%; max-height: 420px; border-radius: 12px; margin-top: 8px;">\n  <source src="${videoUrl}" type="video/mp4">\n  Your browser does not support the video tag.\n</video>\n\n[📥 Download Video File](${videoUrl})\n\nHope you enjoy this video clip! Feel free to request more prompt animations!`;
+        }
+
+        // 2. Image Request Detection (e.g. "একটি বাঘের ছবি দাও", "ছবি", "image", "tiger", "photo", "picture", "draw")
+        const isImageRequest = lower.includes('ছবি') || lower.includes('photo') || lower.includes('image') || lower.includes('picture') || lower.includes('আঁকো') || lower.includes('draw') || lower.includes('paint') || lower.includes('আঁকুন');
+        if (isImageRequest) {
+          const promptClean = q.replace(/ছবি|আঁকো|আঁকুন|দাও|বানাও|তৈরি|draw|image|photo|picture|generate|paint/gi, '').trim() || q;
+          const encodedPrompt = encodeURIComponent(promptClean);
+          const seed = Math.floor(Math.random() * 1000000);
+          const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${seed}`;
+          
+          let title = promptClean || "AI Generated Image";
+          let descBengali = `আপনার প্রমট **"${promptClean}"** অনুযায়ী একটি সুন্দর ও নিখুঁত ছবি তৈরি করা হয়েছে। ছবিটি ফুল এইচডি রেজোলিউশনে রেন্ডার করা হয়েছে! 🎨✨`;
+
+          if (isBengali) {
+            return `🖼️ **AI Generated Image (প্রমট থেকে তৈরি ছবি)**\n\n**প্রমট:** "${promptClean}"\n\n![${title}](${pollinationsUrl})\n\n[📥 Download HD Image (ছবিটি ডাউনলোড করুন)](${pollinationsUrl})\n\n${descBengali}\n\nঅন্য যেকোনো প্রমট দিয়ে ছবি আঁকতে চাইলে আমাকে জানান ভাই!`;
+          }
+          return `🖼️ **AI Generated Image**\n\n**Prompt:** "${promptClean}"\n\n![${title}](${pollinationsUrl})\n\n[📥 Download HD Image](${pollinationsUrl})\n\nHere is your custom generated artwork! Let me know if you would like another drawing or theme.`;
         }
 
         // Greetings

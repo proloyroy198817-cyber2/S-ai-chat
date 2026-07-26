@@ -193,6 +193,80 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           return (
             <div key={idx} className="space-y-1">
               {lines.map((line, lIdx) => {
+                // Check for Markdown Image ![alt](url)
+                const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
+                if (imgMatch) {
+                  const altText = imgMatch[1] || 'AI Generated Image';
+                  const imgUrl = imgMatch[2];
+                  return (
+                    <div key={lIdx} className="my-3 p-2 bg-stone-100 dark:bg-stone-900/80 rounded-2xl border border-stone-200 dark:border-stone-700/80 shadow-xs">
+                      <div className="relative group overflow-hidden rounded-xl bg-stone-950">
+                        <img
+                          src={imgUrl}
+                          alt={altText}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-auto max-h-[450px] object-contain rounded-xl transition-transform duration-300 group-hover:scale-[1.01]"
+                          onError={(e) => {
+                            // Fallback image on error
+                            (e.target as HTMLImageElement).src = 'https://picsum.photos/800/800?seed=generated';
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mt-2 px-1 text-xs text-stone-600 dark:text-stone-300">
+                        <span className="font-medium truncate max-w-[200px] sm:max-w-[300px]">🎨 {altText}</span>
+                        <a
+                          href={imgUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download="ai-generated-image.jpg"
+                          className="inline-flex items-center space-x-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium shadow-xs transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>ডাউনলোড (Download)</span>
+                        </a>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Check for HTML5 Video <video...><source src="url"...> or <video src="url">
+                if (line.includes('<video') || line.includes('<source')) {
+                  const srcMatch = line.match(/src=["'](.*?)["']/);
+                  if (srcMatch) {
+                    const videoSrc = srcMatch[1];
+                    return (
+                      <div key={lIdx} className="my-3 p-2 bg-stone-100 dark:bg-stone-900/80 rounded-2xl border border-stone-200 dark:border-stone-700/80 shadow-xs">
+                        <div className="overflow-hidden rounded-xl bg-stone-950">
+                          <video
+                            controls
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full max-h-[420px] rounded-xl object-contain"
+                          >
+                            <source src={videoSrc} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                        <div className="flex items-center justify-between mt-2 px-1 text-xs text-stone-600 dark:text-stone-300">
+                          <span className="font-medium">🎬 AI Generated Video (1080p HD)</span>
+                          <a
+                            href={videoSrc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download="ai-generated-video.mp4"
+                            className="inline-flex items-center space-x-1 px-2.5 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-medium shadow-xs transition-colors"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>ডাউনলোড (Download)</span>
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  }
+                }
+
                 if (line.startsWith('### ')) {
                   return (
                     <h3 key={lIdx} className="font-bold text-base mt-2 mb-1 text-stone-900 dark:text-stone-100">

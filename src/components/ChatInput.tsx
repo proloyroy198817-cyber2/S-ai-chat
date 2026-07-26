@@ -13,6 +13,9 @@ import {
   FileText,
   FileCode,
   File,
+  Video,
+  Palette,
+  Film,
 } from 'lucide-react';
 import { AttachedFile } from '../types';
 
@@ -299,29 +302,57 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         )}
 
-        {/* Mode Indicators */}
-        {(isWebSearchEnabled || isDeepResearchEnabled || isListening) && (
-          <div className="flex flex-wrap items-center gap-2 mb-1.5 px-1 text-xs">
-            {isListening && (
-              <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-medium animate-pulse">
-                <Mic className="w-3 h-3 text-rose-500" />
-                <span>Listening... Speak your prompt</span>
-              </span>
-            )}
-            {isWebSearchEnabled && (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 font-medium">
-                <Globe className="w-3 h-3" />
-                <span>Web Search Active</span>
-              </span>
-            )}
-            {isDeepResearchEnabled && (
-              <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 font-medium">
-                <FlaskConical className="w-3 h-3" />
-                <span>Deep Research Pipeline Active</span>
-              </span>
-            )}
-          </div>
-        )}
+        {/* Quick Media Creation Chips & Mode Indicators */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-1.5 px-0.5 text-xs">
+          {/* Image Generator Chip */}
+          <button
+            type="button"
+            onClick={() => {
+              setInputText((prev) => (prev.trim() ? `${prev} (ছবি আঁকো)` : 'একটি সুন্দর ছবি আঁকো: '));
+              textareaRef.current?.focus();
+            }}
+            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-medium transition-colors cursor-pointer"
+            title="Prompt to draw/generate image"
+            id="btn-chip-draw-image"
+          >
+            <Palette className="w-3.5 h-3.5 text-emerald-500" />
+            <span>🎨 ছবি আঁকুন (Image)</span>
+          </button>
+
+          {/* Video Generator Chip */}
+          <button
+            type="button"
+            onClick={() => {
+              setInputText((prev) => (prev.trim() ? `${prev} (ভিডিও বানাও)` : 'একটি চমৎকার ভিডিও তৈরি করো: '));
+              textareaRef.current?.focus();
+            }}
+            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 font-medium transition-colors cursor-pointer"
+            title="Prompt to create video animation"
+            id="btn-chip-create-video"
+          >
+            <Film className="w-3.5 h-3.5 text-purple-500" />
+            <span>🎬 ভিডিও বানান (Video)</span>
+          </button>
+
+          {isListening && (
+            <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-medium animate-pulse">
+              <Mic className="w-3 h-3 text-rose-500" />
+              <span>Listening... Speak prompt</span>
+            </span>
+          )}
+          {isWebSearchEnabled && (
+            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 font-medium">
+              <Globe className="w-3 h-3" />
+              <span>Web Search</span>
+            </span>
+          )}
+          {isDeepResearchEnabled && (
+            <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-medium">
+              <FlaskConical className="w-3 h-3" />
+              <span>Deep Research</span>
+            </span>
+          )}
+        </div>
 
         {/* Input Wrapper Card */}
         <div className="relative flex flex-col p-2 bg-white dark:bg-stone-800/90 rounded-2xl border border-stone-300 dark:border-stone-700 shadow-md focus-within:border-emerald-500 dark:focus-within:border-emerald-500 transition-all">
