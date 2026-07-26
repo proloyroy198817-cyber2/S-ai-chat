@@ -15,8 +15,13 @@ workflows:
           elif [ -n "$ANDROID_HOME" ]; then
             echo "sdk.dir=$ANDROID_HOME" > local.properties
           fi
-      - name: Grant execute permissions to Gradle Wrapper
+      - name: Ensure Gradle Wrapper JAR
         script: |
+          mkdir -p gradle/wrapper
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "Gradle wrapper JAR is missing or corrupt. Downloading official Gradle 8.7 wrapper jar..."
+            curl -sSL "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
+          fi
           chmod +x gradlew
       - name: Build Android Debug APK
         script: |
