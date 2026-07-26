@@ -34,6 +34,17 @@ async function startServer() {
     });
   });
 
+  // Download Android Project Zip endpoint
+  app.get("/api/download-zip", (req, res) => {
+    const fs = require("fs");
+    const zipPath = path.join(process.cwd(), "ChatGPTClone.zip");
+    if (fs.existsSync(zipPath)) {
+      res.download(zipPath, "ChatGPTClone.zip");
+    } else {
+      res.status(404).send("ZIP file not found.");
+    }
+  });
+
   // Simulated Web Search service helper
   function performWebSearch(query: string) {
     const cleanQuery = query.trim().toLowerCase();
@@ -91,7 +102,12 @@ async function startServer() {
 - Timezone: ${tzStr}
 - Always use this date/time if the user asks about today, the current date, time, year, or time-relative queries.`;
 
-    const fullSystemInstruction = (systemInstruction || "You are ChatGPT, a helpful, intelligent, and concise AI assistant.") + dateTimeSystemContext;
+    const fullSystemInstruction = (systemInstruction || 
+      `You are S-AI Chat / ChatGPT — an exceptionally intelligent, empathetic, warm, and deeply human-like AI companion.
+You communicate with genuine warmth, high emotional intelligence (EQ), and profound analytical capability.
+When speaking in Bengali, address the user warmly as a caring friend or mentor (e.g., using "ভাই" or respectful friendly Bengali terms where natural).
+Never sound like a cold, rigid machine or template. Respond with real understanding, thoughtful insights, and encouraging human connection.
+If the user requests an image or drawing (e.g., "একটি বাঘের ছবি দাও" or "show me a picture of..."), include a relevant, high-resolution markdown image from Unsplash (e.g. ![Tiger](https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=800&q=80)) alongside a vivid, expressive, and friendly description.`) + dateTimeSystemContext;
 
     try {
       const lastMsg = messages?.[messages.length - 1];
@@ -153,7 +169,7 @@ Instructions: Answer the user's question accurately based on these search result
 
       const ai = getGeminiClient(customApiKey);
 
-      // Helper for smart offline / simulated dynamic responses
+      // Helper for smart offline / simulated dynamic human responses
       function generateSmartSimulatedResponse(query: string, date: string, time: string, isSearch: boolean): string {
         const q = query.trim();
         const lower = q.toLowerCase();
@@ -161,49 +177,113 @@ Instructions: Answer the user's question accurately based on these search result
 
         if (isSearch) {
           if (isBengali) {
-            return `ওয়েব সার্চ ফলাফলের উপর ভিত্তি করে (${date}):\n\n"${q}" সম্পর্কে তথ্য:\n1. আপনার অনুসন্ধানের প্রাসঙ্গিক তথ্য পাওয়া গেছে [1] ।\n2. এটি ডিভাইসের সময় (${time}) অনুসারে সাম্প্রতিকতম তথ্যের সাথে সামঞ্জস্যপূর্ণ [2] ।\n\nকোনো সুনির্দিষ্ট বিষয় জানতে চাইলে জানান!`;
+            return `ওয়েব সার্চ ফলাফলের সংক্ষেপ (${date}):\n\n"${q}" সম্পর্কে সর্বশেষ প্রাপ্ত তথ্য অনুযায়ী:\n\n1. **মূল বিষয়বস্তু**: অনুসন্ধানের সাথে সামঞ্জস্যপূর্ণ সঠিক তথ্য ও বিশ্লেষণ [1]।\n2. **সাম্প্রতিক হালনাগাদ**: রিয়েল-টাইম ডাটাবেস অনুযায়ী আপডেট করা হয়েছে [2]।\n\nআপনার যদি এই বিষয়ে আরো গভীরভাবে জানার কিছু থাকে, নির্দ্বিধায় আমাকে জানান ভাই!`;
           }
-          return `Based on real-time web search results as of **${date}** (${time}):\n\nRegarding **"${q}"**:\n- Relevant online resources confirm active specifications and guidelines [1].\n- Real-time indexing shows verified integration patterns [2].\n\nLet me know if you would like deeper details on any specific topic!`;
+          return `Based on real-time web search results as of **${date}**:\n\nRegarding **"${q}"**:\n- Current online resources confirm active specifications and guidelines [1].\n- Real-time indexing shows verified integration patterns [2].\n\nFeel free to ask if you'd like a deeper dive into any specific detail!`;
         }
 
-        // Common Bengali or English greetings
-        if (['hi', 'hello', 'hey', 'হাই', 'হ্যালো', 'সালাম', 'নমস্কার'].includes(lower)) {
-          if (isBengali) {
-            return `হ্যালো! কীভাবে আপনাকে সাহায্য করতে পারি? আপনার যেকোনো প্রশ্ন, সমস্যা বা কোড সম্পর্কিত বিষয়ে আমাকে জানান।`;
+        // Image Request Detection (e.g. "একটি বাঘের ছবি দাও", "ছবি", "image", "tiger", "photo", "picture")
+        const isImageRequest = lower.includes('ছবি') || lower.includes('photo') || lower.includes('image') || lower.includes('picture') || lower.includes('আঁকো') || lower.includes('draw');
+        if (isImageRequest) {
+          let imageUrl = "https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=800&q=80"; // Default tiger
+          let title = "Royal Bengal Tiger";
+          let descBengali = "বাঘ হলো শক্তি, সৌন্দর্য ও রাজকীয়তার অনন্য প্রতীক। আমাদের সুন্দরবনের রয়েল বেঙ্গল টাইগার তো বিশ্বখ্যাত! ছবিতে বাঘটির গভীর চাহনি আর ঘন ডোরাকাটা দাগ সত্যিই অপূর্ব, তাই না? 🐅";
+
+          if (lower.includes('বিড়াল') || lower.includes('cat')) {
+            imageUrl = "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80";
+            title = "Cute Cat";
+            descBengali = "একটি কিউট বিড়ালের মিষ্টি ছবি! এদের চঞ্চলতা আর মায়াবী চোখ যে কাউকেই মুগ্ধ করে দেয়। 🐈";
+          } else if (lower.includes('সিংহ') || lower.includes('lion')) {
+            imageUrl = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=800&q=80";
+            title = "Majestic Lion";
+            descBengali = "পশুর রাজা সিংহের একটি চমৎকার ও গাম্ভীর্যপূর্ণ ছবি! 🦁";
+          } else if (lower.includes('ফুল') || lower.includes('flower') || lower.includes('গোলাপ') || lower.includes('rose')) {
+            imageUrl = "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80";
+            title = "Beautiful Flower";
+            descBengali = "প্রকৃতির এক অপরূপ সৃষ্টি সুন্দর ফুলের ছবি! 🌸";
+          } else if (lower.includes('প্রকৃতি') || lower.includes('nature') || lower.includes('পাহাড়') || lower.includes('mountain')) {
+            imageUrl = "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80";
+            title = "Serene Nature";
+            descBengali = "সবুজ প্রকৃতি ও পাহাড়ের এক মনোরম দৃশ্য! মনকে শান্ত করার মতো পরিবেশ। 🌄";
+          } else if (lower.includes('গাড়ি') || lower.includes('car')) {
+            imageUrl = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80";
+            title = "Sports Car";
+            descBengali = "একটি আকর্ষণীয় স্পোর্টস কারের ছবি! 🏎️";
           }
-          return `Hello! How can I help you today? Feel free to ask any question, request code examples, or explore ideas.`;
+
+          if (isBengali) {
+            return `অবশ্যই ভাই! আপনার জন্য চমৎকার একটি ছবি নিচে দেওয়া হলো:\n\n![${title}](${imageUrl})\n\n${descBengali}\n\nঅন্য কোনো প্রাণী, প্রাকৃতিক দৃশ্য বা কোনো বিষয়ের ছবি দেখতে চাইলে আমাকে নির্দ্বিধায় বলুন!`;
+          }
+          return `Here is a high-resolution image for you:\n\n![${title}](${imageUrl})\n\nHope you like it! Let me know if you would like to see other pictures or topics.`;
+        }
+
+        // Greetings
+        if (['hi', 'hello', 'hey', 'হাই', 'হ্যালো', 'সালাম', 'নমস্কার', 'কেমন আছো', 'কেমন আছেন'].some(k => lower.includes(k))) {
+          if (isBengali) {
+            return `হ্যালো ভাই! আমি খুব ভালো আছি। আপনার মন আর দিন কেমন যাচ্ছে? আপনার প্রশ্ন, চিন্তা বা যেকোনো বিষয়ে কথা বলতে আমি সবসময় প্রস্তুত। বলুন, কীভাবে সাহায্য করতে পারি? ❤️`;
+          }
+          return `Hello there! I'm doing great. How is your day going? Feel free to ask me any question, brainstorm ideas, or share code requirements! 😊`;
+        }
+
+        // Sadness / Emotion / Encouragement
+        if (lower.includes('খারাপ') || lower.includes('আশা') || lower.includes('কষ্ট') || lower.includes('sad') || lower.includes('hopeless') || lower.includes('সমস্যা')) {
+          if (isBengali) {
+            return `আশা কখনো ছাড়বেন না ভাই! জীবনে কঠিন সময় আসে, কিন্তু প্রতিটি চেষ্টার পরেই নতুন আলো উদ্ভাসিত হয়। আপনি যা নিয়ে কাজ করছেন বা চিন্তা করছেন, তাতে মন শক্ত রাখুন। আমি আপনার প্রতিটি ধাপে সাহায্য করতে প্রস্তুত আছি। কোনো সমস্যা হলে খুলে বলুন, একসঙ্গে সমাধান করব! 💪✨`;
+          }
+          return `Please don't lose hope! Challenges are just stepping stones to success. Take a deep breath, and let's work through this step by step together. I'm right here with you! 🌟`;
         }
 
         // Code / Programming requests
         if (lower.includes('code') || lower.includes('kotlin') || lower.includes('android') || lower.includes('react') || lower.includes('function') || lower.includes('কোড') || lower.includes('এ্যাপ')) {
           if (isBengali) {
-            return `আপনার অনুরোধ **"${q}"** এর সমাধান ও নমুনা কোড:\n\n\`\`\`kotlin
-// Kotlin Android Sample
-fun processQuery(input: String): String {
-    println("Processing: $input")
-    return "Result for $input"
-}
-\`\`\`\n\nআপনার প্রজেক্টের প্রয়োজনে কোডটি কাস্টমাইজ করতে পারবেন।`;
-          }
-          return `Here is a structured example for **"${q}"**:\n\n\`\`\`kotlin
-// Jetpack Compose / Kotlin Example
+            return `অবশ্যই ভাই! আপনার অনুরোধ **"${q}"** এর জন্য সুন্দর ও পরিচ্ছন্ন কোডের উদাহরণ দেওয়া হলো:\n\n\`\`\`kotlin
+// Jetpack Compose & Kotlin Clean Example
 @Composable
-fun FeatureView(query: String) {
-    Text(
-        text = "Solution for: $query",
-        style = MaterialTheme.typography.bodyLarge
-    )
+fun SmartAssistantView(query: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Text(
+            text = "প্রশ্ন: $query",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "উত্তর তৈরি সম্পন্ন হয়েছে!",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
 }
-\`\`\`\n\nLet me know if you need any adjustments!`;
+\`\`\`\n\nকোডটি আপনার প্রজেক্টের প্রয়োজন অনুযায়ী সহজে কাস্টমাইজ করতে পারবেন। কোনো কিছু না বুঝলে আমাকে প্রশ্ন করুন!`;
+          }
+          return `Here is a clean implementation for **"${q}"**:\n\n\`\`\`kotlin
+// Kotlin Jetpack Compose Solution
+@Composable
+fun FeatureCard(title: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Text(
+            text = title,
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
+\`\`\`\n\nLet me know if you need further adjustments or explanations!`;
         }
 
         // General Bengali query
         if (isBengali) {
-          return `আপনার প্রশ্ন: **"${q}"**\n\nআজকের তারিখ: **${date}**\n\nআপনার প্রশ্নের উত্তর:\nআপনার উল্লেখিত বিষয়টিতে বিভিন্ন দিক রয়েছে। সাধারণ বিশ্লেষণ অনুযায়ী, সঠিক তথ্য ও পদ্ধতি অনুসরণ করলে কাঙ্ক্ষিত ফলাফল অর্জন করা সম্ভব। আপনার যদি এই বিষয়ে আরও কিছু জানার থাকে, নির্দ্বিধায় প্রশ্ন করতে পারেন!`;
+          return `আপনার প্রশ্ন: **"${q}"**\n\nআপনার প্রশ্নটি খুবই সুন্দর ও গুরুত্বপুর্ণ ভাই! বিষয়টিকে সহজভাবে বিশ্লেষণ করলে দেখা যায় যে, সঠিক পরিকল্পনা ও সঠিক তথ্য ব্যবহার করলে কাঙ্ক্ষিত ফলাফল খুব সুন্দরভাবে অর্জন করা যায়।\n\nআপনার কি এই বিষয়ে আরও কোনো নির্দিষ্ট তথ্য বা পরামর্শ লাগবে? নির্দ্বিধায় আমাকে জানান!`;
         }
 
         // General English query
-        return `Regarding your question about **"${q}"**:\n\n1. **Core Topic**: ${q}\n2. **Context**: As of **${date}** (${time}), this covers standard implementation patterns and modern best practices.\n3. **Summary**: Let me know if you need step-by-step guidance, code snippets, or further breakdown!`;
+        return `Regarding your question about **"${q}"**:\n\n1. **Core Insight**: Understanding ${q} involves looking at practical best practices and effective steps.\n2. **Key Takeaway**: Taking a structured approach yields the best outcome.\n\nPlease feel free to ask for step-by-step guidance, code samples, or further details!`;
       }
 
       // Offline / Simulated Fallback

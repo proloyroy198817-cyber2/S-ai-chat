@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, Plus, Settings, Search, Smartphone, FolderGit2, Moon, Sun, Copy, Check } from 'lucide-react';
+import { Menu, Plus, Settings, Search, Smartphone, FolderGit2, Moon, Sun, Copy, Check, Download } from 'lucide-react';
 import { AppSettings } from '../types';
+import { downloadAndroidProjectZip } from '../utils/zipExporter';
 
 interface HeaderBarProps {
   viewMode: 'mobile' | 'exporter';
@@ -106,6 +107,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       {/* Right Actions */}
       <div className="flex items-center space-x-1">
+        <button
+          onClick={downloadAndroidProjectZip}
+          className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors"
+          title="Download complete Android Project Zip"
+          id="btn-download-zip-header"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Download ZIP</span>
+        </button>
+
         <button
           onClick={handleCopy}
           disabled={!hasMessages}
