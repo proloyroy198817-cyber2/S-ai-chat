@@ -4,29 +4,36 @@ workflows:
     max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
+      android_sdk: 34
       java: 17
       vars:
         PACKAGE_NAME: "com.example.chatgptclone"
     scripts:
-      - name: Set up local.properties
+      - name: Set up local.properties & Java
         script: |
+          if [ -n "$JAVA_HOME_17" ]; then
+            export JAVA_HOME="$JAVA_HOME_17"
+          fi
           if [ -n "$ANDROID_SDK_ROOT" ]; then
             echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           elif [ -n "$ANDROID_HOME" ]; then
             echo "sdk.dir=$ANDROID_HOME" > local.properties
-          elif [ -d "/Users/builder/programs/android-sdk-macosx" ]; then
-            echo "sdk.dir=/Users/builder/programs/android-sdk-macosx" > local.properties
           fi
+          echo "Java version:"
+          java -version
       - name: Ensure Gradle Wrapper JAR
         script: |
           mkdir -p gradle/wrapper
           if [ ! -f gradle/wrapper/gradle-wrapper.jar ] || ! unzip -t gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
-            echo "Gradle wrapper JAR is missing or corrupt. Downloading official Gradle 8.7 wrapper jar..."
+            echo "Downloading official Gradle 8.7 wrapper jar..."
             curl -sSL "https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar" -o gradle/wrapper/gradle-wrapper.jar
           fi
           chmod +x gradlew
       - name: Build Android Debug APK
         script: |
+          if [ -n "$JAVA_HOME_17" ]; then
+            export JAVA_HOME="$JAVA_HOME_17"
+          fi
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --stacktrace
     artifacts:
@@ -38,4 +45,5 @@ workflows:
         notify:
           failure: true
           success: true
+
 

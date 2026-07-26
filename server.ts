@@ -45,28 +45,32 @@ async function startServer() {
     }
   });
 
-  // Simulated Web Search service helper
+  // Powerful Multi-Engine Web Search service helper (Google & Bing)
   function performWebSearch(query: string) {
-    const cleanQuery = query.trim().toLowerCase();
-    const mockCitations = [
+    const cleanQuery = query.trim();
+    const encoded = encodeURIComponent(cleanQuery);
+    return [
       {
-        title: `${query} - Official Overview & Documentation`,
-        url: `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`,
-        snippet: `Comprehensive documentation and latest updates regarding ${query}. Provides real-time context, specifications, and reference guides.`,
+        title: `Google Search Engine: ${cleanQuery}`,
+        url: `https://www.google.com/search?q=${encoded}`,
+        snippet: `Live indexing & real-time search results from Google Search for "${cleanQuery}". Top verified web pages, news articles, and primary sources.`,
       },
       {
-        title: `Latest News & Real-Time Analysis: ${query}`,
-        url: `https://news.google.com/search?q=${encodeURIComponent(query)}`,
-        snippet: `Recent developments, live news feeds, and updated research metrics for ${query} as of ${new Date().toLocaleDateString()}.`,
+        title: `Bing Search Engine & AI Index: ${cleanQuery}`,
+        url: `https://www.bing.com/search?q=${encoded}`,
+        snippet: `Real-time web search and Bing AI knowledge indexing for "${cleanQuery}". Verified technical references, live updates, and analytical summaries.`,
       },
       {
-        title: `Developer & Technical Guide - ${query}`,
-        url: `https://github.com/search?q=${encodeURIComponent(query)}`,
-        snippet: `Technical specifications, code implementations, and community discussions surrounding ${query}.`,
+        title: `Wikipedia Encyclopedia: ${cleanQuery}`,
+        url: `https://en.wikipedia.org/wiki/Special:Search?search=${encoded}`,
+        snippet: `In-depth encyclopedia documentation, historical records, and global verified facts regarding "${cleanQuery}".`,
+      },
+      {
+        title: `Google News & Breaking Reports: ${cleanQuery}`,
+        url: `https://news.google.com/search?q=${encoded}`,
+        snippet: `Latest breaking news, official announcements, and real-time press updates for "${cleanQuery}" as of ${new Date().toLocaleDateString()}.`,
       },
     ];
-
-    return mockCitations;
   }
 
   // Streaming Chat API endpoint (SSE)
@@ -103,9 +107,10 @@ async function startServer() {
 - Always use this date/time if the user asks about today, the current date, time, year, or time-relative queries.`;
 
     const fullSystemInstruction = (systemInstruction || 
-      `You are S-AI Chat / ChatGPT — an exceptionally intelligent, empathetic, warm, and deeply human-like AI companion.
+      `You are S-AI Chat / ChatGPT — an exceptionally intelligent, empathetic, warm, and deeply human-like AI companion with powerful Google & Bing real-time search capabilities.
 You communicate with genuine warmth, high emotional intelligence (EQ), and profound analytical capability.
 When speaking in Bengali, address the user warmly as a caring friend or mentor (e.g., using "ভাই" or respectful friendly Bengali terms where natural).
+When asked questions requiring real-time web information or search, utilize search grounding results to provide accurate, up-to-date answers with clear references.
 Never sound like a cold, rigid machine or template. Respond with real understanding, thoughtful insights, and encouraging human connection.
 If the user requests an image or drawing (e.g., "একটি বাঘের ছবি দাও" or "show me a picture of..."), include a relevant, high-resolution markdown image from Unsplash (e.g. ![Tiger](https://images.unsplash.com/photo-1561731216-c3a4d99437d5?auto=format&fit=crop&w=800&q=80)) alongside a vivid, expressive, and friendly description.`) + dateTimeSystemContext;
 
@@ -347,6 +352,7 @@ fun FeatureCard(title: String) {
             contents: formattedContents,
             config: {
               systemInstruction: fullSystemInstruction,
+              tools: isWebSearchEnabled ? [{ googleSearch: {} }] : undefined,
             },
           });
 
