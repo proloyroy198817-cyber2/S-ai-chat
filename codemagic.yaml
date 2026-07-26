@@ -5,6 +5,7 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       java: 17
+      android_sdk: 34
       vars:
         PACKAGE_NAME: "com.example.chatgptclone"
     scripts:
@@ -15,22 +16,8 @@ workflows:
           elif [ -n "$ANDROID_HOME" ]; then
             echo "sdk.dir=$ANDROID_HOME" > local.properties
           fi
-      - name: Ensure Gradle Wrapper
+      - name: Grant execute permissions to Gradle Wrapper
         script: |
-          mkdir -p gradle/wrapper
-          if ! unzip -p gradle/wrapper/gradle-wrapper.jar org/gradle/wrapper/GradleWrapperMain.class >/dev/null 2>&1; then
-            echo "Gradle wrapper JAR is missing or invalid. Regenerating..."
-            rm -f gradle/wrapper/gradle-wrapper.jar
-            if command -v gradle >/dev/null 2>&1; then
-              gradle wrapper --gradle-version 8.7 --distribution-type bin
-            else
-              echo "Downloading Gradle 8.7..."
-              curl -sSL "https://services.gradle.org/distributions/gradle-8.7-bin.zip" -o gradle-bin.zip
-              unzip -q -o gradle-bin.zip
-              ./gradle-8.7/bin/gradle wrapper --gradle-version 8.7 --distribution-type bin
-              rm -rf gradle-8.7 gradle-bin.zip
-            fi
-          fi
           chmod +x gradlew
       - name: Build Android Debug APK
         script: |
@@ -45,3 +32,4 @@ workflows:
         notify:
           failure: true
           success: true
+
