@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.chatgptclone.domain.model.Role
 import com.example.chatgptclone.ui.viewmodel.ChatViewModel
@@ -57,18 +56,22 @@ fun ChatScreen(
                     .padding(horizontal = 12.dp)
             ) {
                 items(messages, key = { it.id }) { msg ->
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = if (msg.role == Role.USER) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                    Box(
                         modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .align(if (msg.role == Role.USER) Alignment.End else Alignment.Start)
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        contentAlignment = if (msg.role == Role.USER) Alignment.CenterEnd else Alignment.CenterStart
                     ) {
-                        Text(
-                            text = msg.content,
-                            modifier = Modifier.padding(12.dp),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = if (msg.role == Role.USER) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Text(
+                                text = msg.content,
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
             }
@@ -104,5 +107,5 @@ fun ChatScreen(
                 }
             }
         }
-    }
+    )
 }

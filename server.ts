@@ -174,13 +174,11 @@ fun main() {
       }
 
       // Gemini Streaming Request with Model Fallbacks & Rate-Limit Resilience
-      const activeModel = model.startsWith("gemini") ? model : "gemini-3.6-flash";
+      const activeModel = model.startsWith("gemini") ? model : "gemini-2.0-flash";
       const candidateModels = [
         activeModel,
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash-exp",
-        "gemini-2.5-pro",
+        "gemini-2.0-flash",
+        "gemini-2.0-flash-lite",
       ].filter((m, idx, self) => self.indexOf(m) === idx);
 
       const formattedContents = messages.map((m: any, idx: number) => {
