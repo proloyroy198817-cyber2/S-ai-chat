@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ChatGPTClone"
-include ':app'
+include(":app")
