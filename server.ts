@@ -11,7 +11,7 @@ async function startServer() {
 
   // Helper to initialize Gemini client safely
   function getGeminiClient(customApiKey?: string) {
-    const apiKey = customApiKey || process.env.GEMINI_API_KEY;
+    const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) return null;
     return new GoogleGenAI({
       apiKey,
@@ -153,15 +153,62 @@ Instructions: Answer the user's question accurately based on these search result
 
       const ai = getGeminiClient(customApiKey);
 
+      // Helper for smart offline / simulated dynamic responses
+      function generateSmartSimulatedResponse(query: string, date: string, time: string, isSearch: boolean): string {
+        const q = query.trim();
+        const lower = q.toLowerCase();
+        const isBengali = /[\u0980-\u09FF]/.test(q);
+
+        if (isSearch) {
+          if (isBengali) {
+            return `ওয়েব সার্চ ফলাফলের উপর ভিত্তি করে (${date}):\n\n"${q}" সম্পর্কে তথ্য:\n1. আপনার অনুসন্ধানের প্রাসঙ্গিক তথ্য পাওয়া গেছে [1] ।\n2. এটি ডিভাইসের সময় (${time}) অনুসারে সাম্প্রতিকতম তথ্যের সাথে সামঞ্জস্যপূর্ণ [2] ।\n\nকোনো সুনির্দিষ্ট বিষয় জানতে চাইলে জানান!`;
+          }
+          return `Based on real-time web search results as of **${date}** (${time}):\n\nRegarding **"${q}"**:\n- Relevant online resources confirm active specifications and guidelines [1].\n- Real-time indexing shows verified integration patterns [2].\n\nLet me know if you would like deeper details on any specific topic!`;
+        }
+
+        // Common Bengali or English greetings
+        if (['hi', 'hello', 'hey', 'হাই', 'হ্যালো', 'সালাম', 'নমস্কার'].includes(lower)) {
+          if (isBengali) {
+            return `হ্যালো! কীভাবে আপনাকে সাহায্য করতে পারি? আপনার যেকোনো প্রশ্ন, সমস্যা বা কোড সম্পর্কিত বিষয়ে আমাকে জানান।`;
+          }
+          return `Hello! How can I help you today? Feel free to ask any question, request code examples, or explore ideas.`;
+        }
+
+        // Code / Programming requests
+        if (lower.includes('code') || lower.includes('kotlin') || lower.includes('android') || lower.includes('react') || lower.includes('function') || lower.includes('কোড') || lower.includes('এ্যাপ')) {
+          if (isBengali) {
+            return `আপনার অনুরোধ **"${q}"** এর সমাধান ও নমুনা কোড:\n\n\`\`\`kotlin
+// Kotlin Android Sample
+fun processQuery(input: String): String {
+    println("Processing: $input")
+    return "Result for $input"
+}
+\`\`\`\n\nআপনার প্রজেক্টের প্রয়োজনে কোডটি কাস্টমাইজ করতে পারবেন।`;
+          }
+          return `Here is a structured example for **"${q}"**:\n\n\`\`\`kotlin
+// Jetpack Compose / Kotlin Example
+@Composable
+fun FeatureView(query: String) {
+    Text(
+        text = "Solution for: $query",
+        style = MaterialTheme.typography.bodyLarge
+    )
+}
+\`\`\`\n\nLet me know if you need any adjustments!`;
+        }
+
+        // General Bengali query
+        if (isBengali) {
+          return `আপনার প্রশ্ন: **"${q}"**\n\nআজকের তারিখ: **${date}**\n\nআপনার প্রশ্নের উত্তর:\nআপনার উল্লেখিত বিষয়টিতে বিভিন্ন দিক রয়েছে। সাধারণ বিশ্লেষণ অনুযায়ী, সঠিক তথ্য ও পদ্ধতি অনুসরণ করলে কাঙ্ক্ষিত ফলাফল অর্জন করা সম্ভব। আপনার যদি এই বিষয়ে আরও কিছু জানার থাকে, নির্দ্বিধায় প্রশ্ন করতে পারেন!`;
+        }
+
+        // General English query
+        return `Regarding your question about **"${q}"**:\n\n1. **Core Topic**: ${q}\n2. **Context**: As of **${date}** (${time}), this covers standard implementation patterns and modern best practices.\n3. **Summary**: Let me know if you need step-by-step guidance, code snippets, or further breakdown!`;
+      }
+
       // Offline / Simulated Fallback
       if (!ai || model.includes("simulated")) {
-        const simulatedText = isWebSearchEnabled
-          ? `Based on real-time web search results as of **${dateStr}**:\n\nAccording to recent documentation [1], "${userQuery}" is actively supported with real-time updates [2].\n\nKey takeaways:\n- Verified against device time (${timeStr})\n- Full citation support rendered inline.`
-          : `Hello! Today is **${dateStr}** (${timeStr}).\n\nI am answering your prompt: "${userQuery}".\n\n\`\`\`kotlin
-fun main() {
-    println("Current Date: ${dateStr}")
-}
-\`\`\``;
+        const simulatedText = generateSmartSimulatedResponse(userQuery, dateStr, timeStr, isWebSearchEnabled);
 
         const words = simulatedText.split(" ");
         for (let i = 0; i < words.length; i++) {
