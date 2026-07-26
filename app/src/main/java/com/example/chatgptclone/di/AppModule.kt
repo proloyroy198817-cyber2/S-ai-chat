@@ -45,10 +45,4 @@ object AppModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
-
-    @Provides
-    @Singleton
-    fun provideStreamingResponseHandler(okHttpClient: OkHttpClient): StreamingResponseHandler {
-        return StreamingResponseHandler(okHttpClient)
-    }
 }

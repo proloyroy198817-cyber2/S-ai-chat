@@ -13,7 +13,9 @@ import okhttp3.sse.EventSourceListener
 import okhttp3.sse.EventSources
 import org.json.JSONObject
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class StreamingResponseHandler @Inject constructor(
     private val client: OkHttpClient
 ) {
