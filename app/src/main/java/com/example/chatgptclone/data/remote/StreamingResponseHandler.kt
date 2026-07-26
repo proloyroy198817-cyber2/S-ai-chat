@@ -3,8 +3,10 @@ package com.example.chatgptclone.data.remote
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
@@ -18,13 +20,16 @@ class StreamingResponseHandler(private val client: OkHttpClient) {
         apiKey: String,
         jsonBody: String
     ): Flow<String> = callbackFlow {
+        val mediaType = "application/json".toMediaTypeOrNull()
+        val body = jsonBody.toRequestBody(mediaType)
+
         val request = Request.Builder()
             .url(url)
             .addHeader("Authorization", "Bearer $apiKey")
             .addHeader("x-api-key", apiKey)
             .addHeader("anthropic-version", "2023-06-01")
             .addHeader("Content-Type", "application/json")
-            .post(okhttp3.RequestBody.create(okhttp3.MediaType.parse("application/json"), jsonBody))
+            .post(body)
             .build()
 
         val listener = object : EventSourceListener() {
@@ -55,7 +60,6 @@ class StreamingResponseHandler(private val client: OkHttpClient) {
                         trySend(textChunk)
                     }
                 } catch (e: Exception) {
-                    // Fallback raw send if JSON parse is plain text
                     trySend(data)
                 }
             }
