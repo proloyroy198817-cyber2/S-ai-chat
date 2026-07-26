@@ -14,6 +14,8 @@ workflows:
             echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           elif [ -n "$ANDROID_HOME" ]; then
             echo "sdk.dir=$ANDROID_HOME" > local.properties
+          elif [ -d "/Users/builder/programs/android-sdk-macosx" ]; then
+            echo "sdk.dir=/Users/builder/programs/android-sdk-macosx" > local.properties
           fi
       - name: Ensure Gradle Wrapper JAR
         script: |
