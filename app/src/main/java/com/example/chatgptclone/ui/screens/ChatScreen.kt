@@ -5,13 +5,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.chatgptclone.domain.model.Role
 import com.example.chatgptclone.ui.viewmodel.ChatViewModel
@@ -58,22 +57,18 @@ fun ChatScreen(
                     .padding(horizontal = 12.dp)
             ) {
                 items(messages, key = { it.id }) { msg ->
-                    Box(
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (msg.role == Role.USER) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        contentAlignment = if (msg.role == Role.USER) Alignment.CenterEnd else Alignment.CenterStart
+                            .padding(vertical = 4.dp)
+                            .align(if (msg.role == Role.USER) Alignment.End else Alignment.Start)
                     ) {
-                        Surface(
-                            shape = MaterialTheme.shapes.medium,
-                            color = if (msg.role == Role.USER) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(
-                                text = msg.content,
-                                modifier = Modifier.padding(12.dp),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                        Text(
+                            text = msg.content,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
@@ -109,5 +104,5 @@ fun ChatScreen(
                 }
             }
         }
-    )
+    }
 }
