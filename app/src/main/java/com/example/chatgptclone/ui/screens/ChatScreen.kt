@@ -176,7 +176,7 @@ fun ChatScreen(
                             },
                             enabled = inputText.isNotBlank()
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                            Icon(Icons.Filled.Send, contentDescription = "Send")
                         }
                     }
                 }
