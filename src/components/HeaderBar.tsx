@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Plus, Settings, Search, Smartphone, FolderGit2, Moon, Sun, Copy, Check, Download } from 'lucide-react';
+import { Menu, Plus, Settings, Search, Smartphone, FolderGit2, Moon, Sun, Copy, Check, Download, Laptop, Gamepad2, Image as ImageIcon } from 'lucide-react';
 import { AppSettings } from '../types';
 import { downloadAndroidProjectZip } from '../utils/zipExporter';
 
@@ -10,6 +10,9 @@ interface HeaderBarProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onOpenSearch: () => void;
+  onOpenInstallApp?: () => void;
+  onOpenGameBuilder?: () => void;
+  onOpenImageCreator?: () => void;
   onCopyConversation?: () => void;
   hasMessages?: boolean;
   settings: AppSettings;
@@ -24,6 +27,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   onNewChat,
   onOpenSettings,
   onOpenSearch,
+  onOpenInstallApp,
+  onOpenGameBuilder,
+  onOpenImageCreator,
   onCopyConversation,
   hasMessages = false,
   settings,
@@ -107,14 +113,50 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       {/* Right Actions */}
       <div className="flex items-center space-x-1">
+        {onOpenImageCreator && (
+          <button
+            onClick={onOpenImageCreator}
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-xs transition-colors"
+            title="Prompt to Image Creator Studio"
+            id="btn-image-creator-header"
+          >
+            <ImageIcon className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">ছবি আঁকুন</span>
+          </button>
+        )}
+
+        {onOpenGameBuilder && (
+          <button
+            onClick={onOpenGameBuilder}
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-colors"
+            title="AI App & Game Builder"
+            id="btn-game-builder-header"
+          >
+            <Gamepad2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">App/Game Builder</span>
+          </button>
+        )}
+
+        {onOpenInstallApp && (
+          <button
+            onClick={onOpenInstallApp}
+            className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-semibold transition-colors"
+            title="Install PC & Mobile App"
+            id="btn-install-app-header"
+          >
+            <Laptop className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Install</span>
+          </button>
+        )}
+
         <button
           onClick={downloadAndroidProjectZip}
-          className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors"
+          className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 text-xs font-medium transition-colors"
           title="Download complete Android Project Zip"
           id="btn-download-zip-header"
         >
-          <Download className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Download ZIP</span>
+          <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span className="hidden sm:inline">ZIP</span>
         </button>
 
         <button

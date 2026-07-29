@@ -1,118 +1,66 @@
-# ChatGPT Clone (Android Native & Web Application)
+# 🚀 S-AI Chat / ChatGPT PC & Mobile Application
 
-A modern, full-featured ChatGPT Clone application built for both **Android Native (Kotlin, Jetpack Compose, Material 3, Hilt, Room, OkHttp SSE)** and **Web (React, TypeScript, Express, Vite, Tailwind CSS)**.
-
----
-
-## 📱 Features
-
-- **Jetpack Compose UI**: Modern, fluid, and responsive user interface following Material Design 3 guidelines.
-- **Real-Time Streaming**: Streaming response support using Server-Sent Events (SSE) with OkHttp for ultra-fast chat generation.
-- **Local Storage & History**: Offline chat history persistence powered by Room Database.
-- **Dependency Injection**: Clean architecture with Dagger Hilt for robust dependency management.
-- **Device Context Resolver**: Automatic time, date, locale, and device timezone context injection into AI prompts.
-- **Web & Cloud Integration**: Full web preview with Express backend proxying Google Gemini API calls securely.
-- **CI/CD Ready**: Includes pre-configured `codemagic.yaml` for automated Android APK builds and GitHub Actions workflows.
+Google AI Studio থেকে প্রজেক্টটি সরাসরি ডাউনলোড/এক্সপোর্ট করে আপনার **পিসি (Windows / Mac / Linux)** অথবা মোবাইলে ইন্সটল এবং ব্যবহার করার সম্পূর্ণ নির্দেশিকা।
 
 ---
 
-## 📁 Repository Structure
+## 🇧🇩 পিসিতে (PC) কীভাবে ইন্সটল ও চালু করবেন (How to Run/Install on PC)
 
-```text
-├── app/                          # Android Native App Module
-│   ├── src/main/java/com/example/chatgptclone/
-│   │   ├── data/                 # Local (Room) and Remote (OkHttp SSE) Data Layer
-│   │   ├── di/                   # Dagger Hilt Dependency Injection Modules
-│   │   ├── domain/               # Domain Models & Business Logic
-│   │   ├── ui/                   # Jetpack Compose Screens & ViewModels
-│   │   └── util/                 # Date/Time & Context Resolvers
-│   └── build.gradle              # Android App Dependencies & Build Config
-├── codemagic.yaml                # Codemagic CI/CD Pipeline
-├── src/                          # Web Client (React, TypeScript, Tailwind)
-├── server.ts                     # Express Backend Server (Gemini Proxy)
-├── build.gradle                  # Root Gradle Build File
-└── settings.gradle               # Gradle Settings & Module Inclusions
+### ধাপ ১: প্রজেক্ট ডাউনলোড / এক্সপোর্ট করুন (Export Project)
+১. **Google AI Studio**-র উপরের ডানপাশের **Settings (⚙️)** বা **Export** মেনুতে যান।
+২. **Export to ZIP** অথবা **Export to GitHub** নির্বাচন করে ফাইলগুলো আপনার কম্পিউটারে (PC) ডাউনলোড করুন।
+৩. ডাউনলোডকৃত ZIP ফাইলটি Unzip / Extract করুন।
+
+### ধাপ ২: Node.js ইনস্টল করুন (Node.js Requirements)
+* আপনার পিসিতে **Node.js** (v18 বা তার নতুন ভার্সন) ইন্সটল করা থাকতে হবে।
+* ইন্সটল না থাকলে [nodejs.org](https://nodejs.org) থেকে **LTS Version** ডাউনলোড করে ইন্সটল করে নিন।
+
+### ধাপ ৩: ১-ক্লিকে চালু করুন (1-Click Start)
+* **Windows PC ব্যবহারকারীদের জন্য:**
+  ফোল্ডারের ভেতরে থাকা `start-pc.bat` ফাইলটিতে ডাবল ক্লিক করুন। এটি নিজে থেকেই প্রয়োজনীয় ফাইল ডিপেনডেন্সি (`npm install`) ইনস্টল করে সার্ভার রান করে দেবে!
+* **Mac / Linux ব্যবহারকারীদের জন্য:**
+  টার্মিনালে `chmod +x start-pc.sh && ./start-pc.sh` কমান্ডটি চালান।
+
+---
+
+### 🛠️ ম্যানুয়াল কমান্ড (Manual Commands)
+
+ফোল্ডারের ভেতরে CMD / Terminal চালু করে নিচের কমান্ডগুলো দিন:
+
+```bash
+# ১. ডিপেনডেন্সি ইনস্টল করুন
+npm install
+
+# ২. সার্ভার রান করুন (Development Mode)
+npm run dev
 ```
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Android Development**: Android Studio Jellyfish or newer, JDK 17, Android SDK 34
-- **Web Development**: Node.js 18+ and npm/bun
+সার্ভার চালু হলে ব্রাউজারে খুলুন: **`http://localhost:3000`**
 
 ---
 
-### 🟢 Running the Android App
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/ChatGPTClone.git
-   cd ChatGPTClone
-   ```
-
-2. Open the project in **Android Studio**.
-
-3. Sync Gradle dependencies:
-   ```bash
-   ./gradlew build
-   ```
-
-4. Run on an Emulator or connected Physical Device:
-   ```bash
-   ./gradlew installDebug
-   ```
+## 💻 পিসিতে অ্যাপ হিসেবে ইনস্টল করুন (Desktop PWA App Install)
+১. **Google Chrome** অথবা **Microsoft Edge** ব্রাউজারে `http://localhost:3000` খুলুন।
+২. ব্রাউজারের অ্যাড্রেস বারের ডানপাশে **Install App** বা **App Icon (➕)** দেখতে পাবেন, সেখানে ক্লিক করুন।
+৩. এটি আপনার পিসির ডেক্সটপ (Desktop Shortcut) এবং স্টার্ট মেনুতে একটি স্বতন্ত্র সফটওয়্যার/অ্যাপ হিসেবে ইনস্টল হয়ে যাবে!
 
 ---
 
-### 🌐 Running the Web Application
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-2. Set environment variables in `.env`:
-   ```env
-   GEMINI_API_KEY="your_gemini_api_key_here"
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open `http://localhost:3000` in your browser.
+## 🔑 Gemini API Key সেটআপ (Optional)
+* অ্যাপটি চালু করে স্ক্রিনের উপরের **Settings (⚙️)** আইকনে ক্লিক করে সরাসরি আপনার **Gemini API Key** বসিয়ে দিতে পারেন।
+* অথবা ফোল্ডারে একটি `.env` ফাইল তৈরি করে লিখুন:
+  ```env
+  GEMINI_API_KEY=your_gemini_api_key_here
+  ```
 
 ---
 
-## ⚙️ CI/CD & Automated Builds
+## ✨ Features (বৈশিষ্ট্যসমূহ)
+* 🤖 **Smart Gemini AI Chat**: Bengali & English natural conversations.
+* 🎨 **AI Image Generation**: Text prompt to HD Image using Pollinations AI.
+* 🎬 **AI Video Creation**: Text prompt to full motion HD Video preview & download.
+* 🌐 **Real-time Web Search**: Real-time Google & Bing search grounding.
+* 🔍 **Deep Research Engine**: Multi-step deep query reasoning.
+* 📱 **Android Export**: Direct Jetpack Compose Kotlin APK project download & CI/CD.
 
-This project includes a ready-to-use **Codemagic CI/CD** pipeline (`codemagic.yaml`) that automatically builds debug APKs for every commit:
-
-- **Environment**: Java 17, Mac Mini M1 instance
-- **Output Artifacts**: `app/build/outputs/apk/debug/*.apk`
-
-To trigger builds on Codemagic:
-1. Connect your GitHub repository to Codemagic.
-2. Select the `android-workflow`.
-3. Start the build or set up trigger hooks on `push` / `pull_request`.
-
----
-
-## 🛠 Tech Stack
-
-| Platform | Core Technologies |
-| :--- | :--- |
-| **Android Native** | Kotlin, Jetpack Compose, Material3, Room DB, Coroutines, Flow, Dagger Hilt, OkHttp SSE |
-| **Web** | React 18, TypeScript, Tailwind CSS, Lucide Icons, Vite, Express |
-| **AI Integration** | Google Gemini API (`@google/genai`), Server-Sent Events (SSE) Streaming |
-| **DevOps & CI** | Gradle 8.7, Codemagic CI/CD, GitHub Actions |
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Enjoy using **S-AI Chat**! 🚀

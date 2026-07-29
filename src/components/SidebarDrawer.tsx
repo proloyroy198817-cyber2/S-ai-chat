@@ -12,6 +12,9 @@ import {
   FolderDown,
   Search,
   Smartphone,
+  Laptop,
+  Gamepad2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { ChatThread, AppSettings } from '../types';
 
@@ -28,6 +31,9 @@ interface SidebarDrawerProps {
   onExportThread: (thread: ChatThread) => void;
   onOpenSettings: () => void;
   onOpenOnboarding: () => void;
+  onOpenInstallApp?: () => void;
+  onOpenGameBuilder?: () => void;
+  onOpenImageCreator?: () => void;
   onDownloadZip: () => void;
   settings: AppSettings;
 }
@@ -45,6 +51,9 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
   onExportThread,
   onOpenSettings,
   onOpenOnboarding,
+  onOpenInstallApp,
+  onOpenGameBuilder,
+  onOpenImageCreator,
   onDownloadZip,
   settings,
 }) => {
@@ -217,6 +226,48 @@ export const SidebarDrawer: React.FC<SidebarDrawerProps> = ({
 
         {/* Footer Links */}
         <div className="p-3 border-t border-stone-800 space-y-1">
+          {onOpenImageCreator && (
+            <button
+              onClick={() => {
+                onOpenImageCreator();
+                onClose();
+              }}
+              className="flex items-center space-x-2.5 w-full px-3 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors shadow-xs"
+              id="btn-sidebar-image-creator"
+            >
+              <ImageIcon className="w-4 h-4 text-white" />
+              <span>🎨 Prompt to Image Creator (ছবি আঁকুন)</span>
+            </button>
+          )}
+
+          {onOpenGameBuilder && (
+            <button
+              onClick={() => {
+                onOpenGameBuilder();
+                onClose();
+              }}
+              className="flex items-center space-x-2.5 w-full px-3 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors shadow-xs"
+              id="btn-sidebar-game-builder"
+            >
+              <Gamepad2 className="w-4 h-4 text-white" />
+              <span>📱 AI App & Game Builder (গেম/অ্যাপ)</span>
+            </button>
+          )}
+
+          {onOpenInstallApp && (
+            <button
+              onClick={() => {
+                onOpenInstallApp();
+                onClose();
+              }}
+              className="flex items-center space-x-2.5 w-full px-3 py-2 text-xs font-semibold text-stone-300 hover:text-white bg-stone-800 hover:bg-stone-700 rounded-lg transition-colors"
+              id="btn-sidebar-install-app"
+            >
+              <Laptop className="w-4 h-4 text-emerald-400" />
+              <span>Install PC & Mobile Guide</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               onDownloadZip();

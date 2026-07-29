@@ -1,0 +1,20 @@
+{
+  "name": "S-AI Chat | ChatGPT PC & Mobile App",
+  "short_name": "S-AI Chat",
+  "description": "Full-featured ChatGPT Web & Desktop App with AI Image Generation, Video Creation, Web Search, and Android Exporter.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#18181b",
+  "theme_color": "#10a37f",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='128' fill='%2310a37f'/><path d='M256 120c-75 0-136 61-136 136s61 136 136 136 136-61 136-136-61-136-136-136zm0 216c-44 0-80-36-80-80s36-80 80-80 80 36 80 80-36 80-80 80z' fill='white'/></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

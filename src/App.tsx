@@ -15,8 +15,11 @@ import { ChatInput } from './components/ChatInput';
 import { SettingsModal } from './components/SettingsModal';
 import { OnboardingModal } from './components/OnboardingModal';
 import { SearchModal } from './components/SearchModal';
+import { InstallModal } from './components/InstallModal';
+import { AppGameBuilder } from './components/AppGameBuilder';
+import { ImageCreatorModal } from './components/ImageCreatorModal';
 import { AndroidExporter } from './components/AndroidExporter';
-import { Sparkles, MessageSquarePlus } from 'lucide-react';
+import { Sparkles, Gamepad2 } from 'lucide-react';
 
 export default function App() {
   const [viewMode, setViewMode] = useState<'mobile' | 'exporter'>('mobile');
@@ -31,10 +34,37 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+  const [isGameBuilderOpen, setIsGameBuilderOpen] = useState(false);
+  const [isImageCreatorOpen, setIsImageCreatorOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Capture PWA beforeinstallprompt event
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleTriggerNativeInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choiceResult = await deferredPrompt.userChoice;
+      if (choiceResult?.outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setIsInstallModalOpen(false);
+      }
+    }
+  };
 
   // Apply Dark/Light theme class to html root
   useEffect(() => {
@@ -510,6 +540,9 @@ export default function App() {
         onNewChat={handleNewChat}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenInstallApp={() => setIsInstallModalOpen(true)}
+        onOpenGameBuilder={() => setIsGameBuilderOpen(true)}
+        onOpenImageCreator={() => setIsImageCreatorOpen(true)}
         onCopyConversation={handleCopyConversation}
         hasMessages={Boolean(activeThread && activeThread.messages.length > 0)}
         settings={settings}
@@ -613,6 +646,9 @@ export default function App() {
         onExportThread={handleExportThread}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        onOpenInstallApp={() => setIsInstallModalOpen(true)}
+        onOpenGameBuilder={() => setIsGameBuilderOpen(true)}
+        onOpenImageCreator={() => setIsImageCreatorOpen(true)}
         onDownloadZip={downloadAndroidProjectZip}
         settings={settings}
       />
@@ -638,6 +674,28 @@ export default function App() {
         onClose={() => setIsSearchOpen(false)}
         threads={threads}
         onSelectThread={setActiveThreadId}
+      />
+
+      {/* Install Modal */}
+      <InstallModal
+        isOpen={isInstallModalOpen}
+        onClose={() => setIsInstallModalOpen(false)}
+        deferredPrompt={deferredPrompt}
+        onTriggerNativeInstall={handleTriggerNativeInstall}
+      />
+
+      {/* AI App & Game Builder Modal */}
+      <AppGameBuilder
+        isOpen={isGameBuilderOpen}
+        onClose={() => setIsGameBuilderOpen(false)}
+        apiKey={settings.apiKey}
+      />
+
+      {/* Prompt to Image Creator Modal */}
+      <ImageCreatorModal
+        isOpen={isImageCreatorOpen}
+        onClose={() => setIsImageCreatorOpen(false)}
+        onSendToChat={(text) => handleSendMessage(text)}
       />
     </div>
   );
